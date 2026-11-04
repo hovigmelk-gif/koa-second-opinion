@@ -1,7 +1,7 @@
 # KOA Second Opinion: website (Claude Code briefing)
 
 Personal portfolio site by Hovig Melkonyants (Biomedical Engineering, UTS). It runs the locked MATLAB knee-OA
-models **in the browser** and presents the project results. Live: Netlify (NETLIFY_URL); legacy copy https://koa-second-opinion-380491b2.base44.app
+models **in the browser** and presents the project results. Live: Netlify (https://koa-second-opinion.netlify.app); legacy copy https://koa-second-opinion-380491b2.base44.app
 Hosting: Netlify (`netlify.toml`). Data: Supabase (`reviews`, `contact_messages`). Stack: Vite + React, plain CSS, ONNX Runtime Web (wasm).
 
 ## Commands

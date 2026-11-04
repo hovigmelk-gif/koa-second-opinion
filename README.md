@@ -1,6 +1,6 @@
 # KOA Second Opinion (website)
 
-Live (Netlify): NETLIFY_URL  ·  Old Base44 copy: https://koa-second-opinion-380491b2.base44.app
+Live (Netlify): https://koa-second-opinion.netlify.app  ·  Old Base44 copy: https://koa-second-opinion-380491b2.base44.app
 
 Browser version of KOA_Predict / KOA_App: Model 1 (3-seed ResNet-18, flip TTA, KL0-1 margin 0.10),
 Model 4B (ordinal, 5-grade), Grad-CAM (softmax gradient, res5b_relu) and the pre-declared review flags.
@@ -20,7 +20,7 @@ Model 4B (ordinal, 5-grade), Grad-CAM (softmax gradient, res5b_relu) and the pre
 3. Netlify: the same two variables under Site configuration > Environment variables (baked in at build time).
 4. `npm install` -> `npx netlify login` (once) -> `npx netlify deploy --build --prod`
 
-Contact messages: Supabase dashboard > Table Editor > contact_messages (the site can only insert, never read them).
+Contact messages: https://supabase.com/dashboard/project/ytfsyklvkngckwohtsnu/editor (Table Editor > contact_messages) (the site can only insert, never read them).
 
 ## Deploy option 2: Base44 (legacy)
 The Base44 version is git tag `base44-version` (Base44 SDK for data, models on media.base44.com). Base44's site limit is
