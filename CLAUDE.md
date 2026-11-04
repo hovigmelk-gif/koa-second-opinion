@@ -1,14 +1,16 @@
 # KOA Second Opinion: website (Claude Code briefing)
 
 Personal portfolio site by Hovig Melkonyants (Biomedical Engineering, UTS). It runs the locked MATLAB knee-OA
-models **in the browser** and presents the project results. Live: https://koa-second-opinion-380491b2.base44.app
-Hosting/backend: Base44 app `6aeae7497e27e764380491b2` (see `base44/`). Stack: Vite + React 18, plain CSS, ONNX Runtime Web (wasm).
+models **in the browser** and presents the project results. Live: Netlify (NETLIFY_URL); legacy copy https://koa-second-opinion-380491b2.base44.app
+Hosting: Netlify (`netlify.toml`). Data: Supabase (`reviews`, `contact_messages`). Stack: Vite + React, plain CSS, ONNX Runtime Web (wasm).
 
 ## Commands
 - `npm install` · `npm run dev` (local preview, port 5173) · `npm run build` (outputs `dist/`)
-- Publish: `npx base44 login` (once) then `npm run build && npx base44 site deploy -y`
-- Data tables: `npx base44 entities push -y` (Review = public read/create; ContactMessage = public create, owner-only read)
-- Base44 site upload limit is **50 MB**: never put model files in `public/`.
+- Env: `.env` (git-ignored, see `.env.example`) needs `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY`; same two vars set in Netlify site settings.
+- Publish (Netlify): `npx netlify login` (once) then `npx netlify deploy --build --prod`.
+- Data tables: `supabase/migrations/*.sql` (RLS: reviews = anon select+insert; contact_messages = anon insert only; read messages in the Supabase dashboard).
+- Legacy Base44 deploy: only from git tag `base44-version` (see README). Base44's 50 MB site limit means main (135 MB of models in `public/models/`) cannot go there.
+  `base44/` and the base44 packages (optionalDependencies) are kept for that; nothing in `src/` imports them.
 
 ## Architecture
 - `src/App.jsx`: front page (`#/`): Hero, Pipeline + native `Overview` diagram, KL scale, Results (3-group CM + `CM5` 5-grade CM),
@@ -16,10 +18,10 @@ Hosting/backend: Base44 app `6aeae7497e27e764380491b2` (see `base44/`). Stack: V
   Routing: only `#/app` switches view; section nav uses `scrollIntoView` (do not reintroduce hash links for sections: they caused a double-click bug).
 - `src/Workstation.jsx`: full-screen app (`#/app`), a port of MATLAB `KOA_App.m`: blind-first, KL buttons, Compare with AI,
   agreement banner, probability bars, summaries (word-for-word port of `KOA_Explain.m` templateText), quick summary (.txt), detailed report (printable HTML).
-- `src/engine.js`: downloads 6 fp16 ONNX backbones + `heads.json` from Base44 storage (`URLS`), caches them (Cache API), runs the pipeline.
+- `src/engine.js`: downloads 6 fp16 ONNX backbones + `heads.json` from `/models/` (`public/models/`, `URLS`), caches them (Cache API `koa-models-v2`; bump the name when models change), runs the pipeline.
 - `src/koa-core.js`: MATLAB-parity maths: `clahe` (bit-identical to adapthisteq ClipLimit 0.02), `imresizeBicubic`, `toGrey` (rgb2gray),
   `headProbs` (GAP + fc + softmax), `gradCam7` (softmax-gradient Grad-CAM on res5b_relu, bicubic upsample), `decide` (KL0-1 margin 0.10 + pre-declared flags), `imageChecks`, `JET`.
-- `src/base44Client.js`: SDK client for reviews/contact.
+- `src/supabaseClient.js`: supabase-js client for reviews/contact (Reviews + Connect in App.jsx).
 
 ## Pipeline (must stay identical to MATLAB KOA_Predict)
 CLAHE → 224×224 → grey to 3 channels → Model 1 (3 seeds × image + mirror, 6 softmax averaged) → subtract 0.10 from KL0-1 → argmax.
@@ -35,7 +37,7 @@ ONNX models are cut at `res5b_relu` (input `data` [N,3,224,224], 0-255 floats; n
 ## Figures
 - `make_dark.py <ADV_STU_B>`: dark copy of `AT3 Report Figures/_source/make_at3_figures.py`, writes `./dark/`. Never edit the original script.
 - `train_curves.py`: Train_R18/R50/R101/EffB0 from MATLAB TrainLogs + R18 history CSVs. `gcfigs.py` + `five.mjs`/`run.mjs`: Grad-CAM supp figures.
-- Convert PNG → `public/figs/<name>.webp` (max 1800 px wide). Style: dark (#0d1b36 figure bg), teal #14b8a6 primary, no white backgrounds.
+- `figs.py "<ADV_STU_B>/AT3 Report Figures/Web_DarkTheme"`: PNG → `public/figs/<name>.webp` for every FIGS entry (max 1800 px wide, q90, flattened on #0d1b36); reports mismatches. Train_* come from `train_curves.py`, not Web_DarkTheme. Style: dark (#0d1b36 figure bg), teal #14b8a6 primary, no white backgrounds.
 
 ## Ground rules (project)
 - Never write to, move or retrain the locked Model 1 checkpoints in `C:\Users\hovm3\Desktop\ADV_STU_B` (MD5-verified); dataset folders are read-only.
