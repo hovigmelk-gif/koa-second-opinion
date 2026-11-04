@@ -1,0 +1,17 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "name": { "type": "string", "description": "Reviewer name" },
+    "role": { "type": "string", "description": "Role or organisation (optional)" },
+    "rating": { "type": "integer", "description": "1 to 5 stars" },
+    "comment": { "type": "string", "description": "Review text" }
+  },
+  "required": ["name", "rating", "comment"],
+  "rls": {
+    "create": true,
+    "read": true,
+    "update": { "user_condition": { "role": "admin" } },
+    "delete": { "user_condition": { "role": "admin" } }
+  }
+}

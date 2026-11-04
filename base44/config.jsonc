@@ -1,0 +1,12 @@
+// Base44 Project Configuration
+{
+  "name": "koa-second-opinion",
+  "description": "Knee OA severity grading from X-rays (ResNet-18 ensemble) running in the browser. Research prototype by Hovig Melkonyants.",
+  "visibility": "public",
+  "site": {
+    "buildCommand": "npm run build",
+    "serveCommand": "npm run dev",
+    "outputDirectory": "./dist",
+    "installCommand": "npm install"
+  }
+}
