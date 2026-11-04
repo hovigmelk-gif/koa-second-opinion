@@ -807,30 +807,45 @@ const EXPLAIN = {
     'For every grade the attention sits across the joint space, not on bone far from the joint or on the image edges. This supports that the model reads the joint itself rather than shortcuts such as text markers or the image border.'],
 };
 
+const CAT_ICON = { Errors: 'alert', '5-grade': 'grid5', Comparison: 'bars', Reliability: 'check', Explainability: 'target', Training: 'gear', Data: 'database' };
+// One opened category: a strip of its figures, the chosen one shown large with its explanation
+function FigCategory({ cat, onZoom }) {
+  const list = FIGS.map((f, i) => [...f, i]).filter(f => f[0] === cat);
+  const [k, setK] = useState(0);
+  const [, name, cap, i] = list[k], ex = EXPLAIN[name];
+  return (<>
+    {list.length > 1 && <div className="figpick" role="group" aria-label={`${cat} figures`}>{list.map(([, n, c], j) => (
+      <button key={n} className={j === k ? 'on' : ''} aria-pressed={j === k} onClick={() => setK(j)}>
+        <img src={`/figs/${n}.webp`} alt="" loading="lazy" /><span>{c}</span></button>))}</div>}
+    <figure className="figshow">
+      <button className="figzoom" onClick={() => onZoom(i)} aria-label="View this figure full-screen"><img src={`/figs/${name}.webp`} alt={cap} /></button>
+      <figcaption>{cap}<small>Click the figure to view it full-screen.</small></figcaption>
+    </figure>
+    {ex && <div className="lbtext inline">
+      <div><h4>How to read it</h4><p>{ex[0]}</p></div>
+      <div><h4>What it tells us</h4><p>{ex[1]}</p></div>
+    </div>}
+  </>);
+}
 function Gallery() {
-  const [cat, setCat] = useState('All');
   const [open, setOpen] = useState(-1);
-  const shown = FIGS.map((f, i) => [...f, i]).filter(f => cat === 'All' || f[0] === cat);
   useEffect(() => {
     if (open < 0) return;
+    const same = FIGS.map((f, i) => i).filter(i => FIGS[i][0] === FIGS[open][0]);
     const k = e => {
       if (e.key === 'Escape') setOpen(-1);
-      const idx = shown.findIndex(f => f[3] === open);
-      if (e.key === 'ArrowRight') setOpen(shown[(idx + 1) % shown.length][3]);
-      if (e.key === 'ArrowLeft') setOpen(shown[(idx - 1 + shown.length) % shown.length][3]);
+      const x = same.indexOf(open);
+      if (e.key === 'ArrowRight') setOpen(same[(x + 1) % same.length]);
+      if (e.key === 'ArrowLeft') setOpen(same[(x - 1 + same.length) % same.length]);
     };
     addEventListener('keydown', k); return () => removeEventListener('keydown', k);
-  }, [open, cat]);
+  }, [open]);
+  const tabs = CATS.slice(1).map(c => [CAT_ICON[c], `${c} (${FIGS.filter(f => f[0] === c).length})`, <FigCategory key={c} cat={c} onZoom={setOpen} />]);
   return (
     <section id="figures" className="wrap sec">
       <div className="sec-head"><p className="eyebrow">Figures</p><h2>The full evaluation, figure by figure</h2>
-        <p>All figures from the project report, generated from the saved test predictions. Click any figure to enlarge it with a plain-language explanation of how to read it and what it shows; use the arrow keys to browse.</p></div>
-      <div className="chips">{CATS.map(c => <button key={c} className={c === cat ? 'on' : ''} onClick={() => setCat(c)}>{c}{c !== 'All' && <small>{FIGS.filter(f => f[0] === c).length}</small>}</button>)}</div>
-      <div className="gallery">{shown.map(([c, f, cap, i]) => (
-        <button key={f} className="fig" onClick={() => setOpen(i)}>
-          <span className={`paper `}><img src={`/figs/${f}.webp`} alt={cap} loading="lazy" /></span>
-          <span className="figcap"><em>{c}</em>{cap}<small className="figmore">Explain this figure →</small></span>
-        </button>))}</div>
+        <p>All {FIGS.length} figures from the project report, generated from the saved test predictions. Open a category, pick a figure, and read how to read it and what it shows. Click a figure to view it full-screen; use the arrow keys to browse within the category.</p></div>
+      <IconTabs id="figs" label="Figure categories" items={tabs} collapsible />
       {open >= 0 && (
         <div className="lightbox" onClick={() => setOpen(-1)}>
           <figure onClick={e => e.stopPropagation()}>
