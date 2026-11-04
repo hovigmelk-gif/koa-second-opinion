@@ -180,7 +180,7 @@ h2{font-size:clamp(28px,3.4vw,40px);line-height:1.15}h3{font-size:14px;font-weig
 .ovcol{overflow:visible}.ovcol h4{border-radius:15px 15px 0 0}
 .tip{position:relative;cursor:help;outline:none;border-radius:10px;transition:box-shadow .15s}
 .tip:hover,.tip:focus-visible{box-shadow:0 0 0 1.5px rgba(20,184,166,.6);z-index:31}
-.tip::after{content:attr(data-tip);box-sizing:border-box;position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(calc(-50% + var(--tx,0px)),4px);width:max-content;max-width:min(290px,84vw);background:#06101f;border:1px solid var(--teal2);color:var(--ink);font:400 13px/1.5 var(--sans);letter-spacing:0;text-transform:none;text-align:left;padding:10px 12px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.55);display:none;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:32}
+.tip::after{content:attr(data-tip);box-sizing:border-box;white-space:normal;position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(calc(-50% + var(--tx,0px)),4px);width:max-content;max-width:min(290px,84vw);background:#06101f;border:1px solid var(--teal2);color:var(--ink);font:400 13px/1.5 var(--sans);letter-spacing:0;text-transform:none;text-align:left;padding:10px 12px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.55);display:none;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:32}
 .tip:hover::after,.tip:focus::after{display:block;opacity:1;transform:translate(calc(-50% + var(--tx,0px)),0)}
 body{overflow-x:clip}
 .ovhead .tip{flex:1;display:flex}.ovhead .tip span{flex:1}.ovmet .tip span,.ovpills .tip span{display:block}
