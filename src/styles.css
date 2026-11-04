@@ -236,3 +236,4 @@ button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;t
 .figzoom img{display:block;width:100%;max-height:560px;object-fit:contain}
 .figshow figcaption{margin-top:10px;font-size:15px;color:var(--ink)}.figshow figcaption small{display:block;margin-top:2px;font-size:12px;color:var(--mute)}
 .lbtext.inline{max-width:none;margin-top:14px}.lbtext.inline>div{background:var(--track)}
+.revdisc{margin-top:6px}.revdisc b{color:#f2a93b;font-weight:600}

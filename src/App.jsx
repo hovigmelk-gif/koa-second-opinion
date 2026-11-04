@@ -615,6 +615,7 @@ function Reviews() {
           <button className="btn primary" disabled={st === 'sending'}>{st === 'sending' ? 'Posting…' : 'Post review'}</button>
           {st && st !== 'sending' && <p className="formnote">{st}</p>}
           <p className="mini">Reviews are public. Please don't include patient information.</p>
+          <p className="mini revdisc"><b>Research Prototype · Not for Clinical Use.</b> Academic research prototype only. Not validated or approved for clinical diagnosis or medical use.</p>
         </form>
         <div className="revlist">
           {list.length > 0 && <div className="avg"><b>{avg.toFixed(1)}</b><Stars n={Math.round(avg)} /><span>{list.length} review{list.length > 1 ? 's' : ''}</span></div>}
