@@ -460,7 +460,7 @@ function DevFlow() {
       <Arrow />
       <Step cls="last" ic="globe" l="Website deployment" t="The trained networks were exported to ONNX and the rest of the pipeline rebuilt in JavaScript, so the models run in your browser. The browser version was checked against MATLAB on all 1,656 test knees." />
     </div>
-    <p className="dfhint">How the final model was developed (report Figure 1). Hover over or tap a step for details.</p>
+    <p className="dfhint">How the final model was developed. Hover over or tap a step for details.</p>
   </>);
 }
 function About() {
