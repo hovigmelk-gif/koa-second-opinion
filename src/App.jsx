@@ -368,15 +368,30 @@ function Verification({ load }) {
   return (
     <section className="wrap sec">
       <div className="sec-head"><p className="eyebrow">Verification</p><h2>The browser gives the same answers as the MATLAB app</h2>
-        <p>The trained MATLAB networks were exported to ONNX, cut at the last convolutional block; pooling, the classifier, the decision rule and Grad-CAM are re-implemented here and checked against MATLAB on reference knees.</p></div>
-      <div className="card tablewrap">
+        <p>The models were built in MATLAB, but this website runs them in your browser. Verification checks that the browser version gives the same answers. You do not need MATLAB: its results were computed once, when the project was built, and are saved on this page for comparison. Click through the five steps to see how it was done.</p></div>
+      <IconTabs id="verify" label="How the browser version was verified" numbered items={[
+        ['target', 'MATLAB reference', <><p>The final models were developed and run in MATLAB on the developer's computer. For five held-out test knees, one per KL grade, MATLAB's exact outputs (probabilities, grades and Grad-CAM maps) were saved. These saved numbers are the MATLAB column in the table below.</p><p className="tech"><b>Technical detail:</b> reference outputs of KOA_Predict exported with KOA_ExportWeb.m.</p></>],
+        ['arrow', 'Export to ONNX', <><p>The trained networks were converted to ONNX, an open format that can run almost anywhere, including in a web browser. They were cut after their last convolutional block, so the remaining steps could be rebuilt transparently.</p><p className="tech"><b>Technical detail:</b> six backbones (three seeds each of Model 1 and Model 4B) cut at res5b_relu; classifier weights stored separately in heads.json; weights stored at half precision to halve the download.</p></>],
+        ['gear', 'Rebuild in JavaScript', <><p>Everything around the networks was rewritten in JavaScript to behave exactly like the MATLAB code: contrast enhancement, resizing, averaging the three networks and the mirrored image, the classifier, the decision rule, the review flags and Grad-CAM.</p><p className="tech"><b>Technical detail:</b> CLAHE bit-identical to MATLAB adapthisteq (clip limit 0.02, 8 × 8 tiles); bicubic imresize; softmax-gradient Grad-CAM on res5b_relu; 0.10 KL 0–1 margin.</p></>],
+        ['check', 'Compare', <><p>The same five knees were run through the browser version and compared with the saved MATLAB numbers: same severity group, same KL grade and nearly identical probabilities. You can repeat this comparison yourself with the button below. Your browser does the computing; MATLAB is not involved.</p><p className="tech"><b>Technical detail:</b> the largest difference is 0.16 percentage points, caused by storing the weights at half precision.</p></>],
+        ['bars', 'Full test set', <><p>Finally, the same JavaScript code was run outside the website on all 1,656 test knees. It gave exactly the same accuracy, confusion matrix and review flags as MATLAB.</p><p className="tech"><b>Technical detail:</b> 74.94% three-group accuracy, 58.88% exact KL grade and 86.65% within one grade, using full-precision weights (Node.js with onnxruntime-node).</p></>],
+      ]} />
+      <div className="card tablewrap verify">
         <div className="verbar">
-          <p className="mini">Don't take our word for it: run the five reference knees through the real models on your own device and compare with MATLAB.</p>
+          <p className="mini">Try it: your browser runs the five reference knees through the models now and compares its answers with the MATLAB values saved on this page. Hover over or tap a column heading to see what it means.</p>
           <button className="btn primary" disabled={!load.ready || busy} onClick={run}>
-            {busy ? 'Running on this device…' : !load.ready ? `Loading models · ${Math.round(load.p * 100)}%` : done ? 'Run again' : 'Run the check on this device'}</button>
+            {busy ? 'Running on this device…' : !load.ready ? `Loading models · ${Math.round(load.p * 100)}%` : done ? 'Run again' : 'Run the five knees on this device'}</button>
         </div>
-        <table className="ver">
-          <thead><tr><th>Test knee</th><th>Reference</th><th>3-group (both)</th><th>MATLAB</th><th>Browser</th><th>This device</th><th>KL grade (both)</th></tr></thead>
+        <div className="tbl" data-tipbounds><table className="ver">
+          <thead><tr>{[
+            ['Test knee', 'The ID of a held-out knee from the OAI kneeKL224 test set (L = left, R = right). None of these knees was used in training.'],
+            ['Reference grade', 'The KL grade given to this knee in the dataset by a human reader.'],
+            ['3-group result', 'The severity group chosen by Model 1. MATLAB and the browser chose the same group for every knee.'],
+            ['MATLAB (saved)', 'The probability Model 1 gave its chosen group when run in MATLAB. It was computed once, on the developer\'s computer, and saved here for comparison.'],
+            ['Browser (recorded)', 'The same probability from the browser version, recorded when this website was built.'],
+            ['Your device (live)', 'The same probability computed right now by your browser when you press the button. A tick means the group and the KL grade match the MATLAB result.'],
+            ['KL grade', 'The KL grade chosen by Model 4B, the five-grade model. MATLAB and the browser chose the same grade for every knee.'],
+          ].map(([h, t]) => <th key={h}><Tip className="below" t={t}><span className="thtip">{h}</span></Tip></th>)}</tr></thead>
           <tbody>{rows.map(r => {
             const x = live[r[0]];
             return <tr key={r[0]}><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3].toFixed(2)}%</td><td>{r[4].toFixed(2)}%</td>
@@ -384,11 +399,11 @@ function Verification({ load }) {
                 : <>{(100 * x.P3[GROUP_SHORT.indexOf(r[2])]).toFixed(2)}% <span>{ok(r) ? '✓' : `✗ ${GROUP_SHORT[x.grp]}, KL ${x.kl}`}</span></>}</td>
               <td>{r[5]}</td></tr>;
           })}</tbody>
-        </table>
+        </table></div>
         {done && <p className={`verresult ${diffs.length === rows.length ? 'good' : 'bad'}`} aria-live="polite">{diffs.length === rows.length
-          ? `All 5 knees match MATLAB on this device: same severity group and same KL grade, with probabilities within ${Math.max(...diffs).toFixed(2)} percentage points.`
-          : `${diffs.length} of 5 knees matched on this device.`}</p>}
-        <div className="fullcheck"><b>Full test set, all 1,656 knees:</b> the browser pipeline reproduces the MATLAB results exactly: 74.94% 3-group accuracy with the identical confusion matrix, 58.88% exact KL grade, 86.65% within one grade, and the same review flags (27.2% flagged, 81.7% correct when unflagged).</div>
+          ? `Your device reproduced the saved MATLAB results for all 5 knees: same severity group and same KL grade, with probabilities within ${Math.max(...diffs).toFixed(2)} percentage points.`
+          : `Your device reproduced the saved MATLAB results for ${diffs.length} of 5 knees.`}</p>}
+        <div className="fullcheck"><b>Full test set, all 1,656 knees:</b> the browser code, run outside the website, reproduces the MATLAB results exactly: 74.94% 3-group accuracy with the identical confusion matrix, 58.88% exact KL grade, 86.65% within one grade, and the same review flags (27.2% flagged, 81.7% correct when unflagged).</div>
         <p className="mini">CLAHE output is bit-identical to MATLAB adapthisteq; Grad-CAM maps correlate at r = 0.9999. The full-test-set check used full-precision weights; the live site stores them at half precision to halve the download, which moved probabilities by at most 0.16 percentage points on the reference knees.</p>
       </div>
     </section>
@@ -838,10 +853,11 @@ function Gallery() {
 }
 
 // Hover (or tap) explanation for one part of the How it works diagram
-// Shifts the bubble sideways so it stays inside the viewport (bubble is up to 290 px or 84% of the screen wide)
+// Shifts the bubble sideways so it stays inside the viewport (or inside a [data-tipbounds] scroll box) (bubble is up to 290 px or 84% of the screen wide)
 const placeTip = e => {
   const r = e.currentTarget.getBoundingClientRect(), w = Math.min(290, innerWidth * 0.84), c = r.left + r.width / 2;
-  const left = Math.min(Math.max(c - w / 2, 8), innerWidth - w - 8);
+  const b = e.currentTarget.closest('[data-tipbounds]')?.getBoundingClientRect() ?? { left: 0, right: innerWidth };
+  const left = Math.min(Math.max(c - w / 2, b.left + 8), b.right - w - 8);
   e.currentTarget.style.setProperty('--tx', `${Math.round(left - (c - w / 2))}px`);
 };
 const Tip = ({ t, className = '', children }) =>
