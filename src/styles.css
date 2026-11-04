@@ -221,3 +221,8 @@ button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;t
 .tip.below::after{bottom:auto;top:calc(100% + 8px);transform:translate(calc(-50% + var(--tx,0px)),-4px)}.tip.below:hover::after,.tip.below:focus::after{transform:translate(calc(-50% + var(--tx,0px)),0)}
 .thtip{border-bottom:1px dashed var(--mute);padding-bottom:1px;white-space:nowrap}.ver th .tip{display:inline-block;border-radius:4px}
 .verify{overflow:visible}.verify table{min-width:760px}.verify .tbl{overflow-x:auto}
+/* Results: collapsible tabs */
+.tabstate{font:500 11px var(--mono);color:var(--mute);text-transform:uppercase;letter-spacing:.08em}.steptabs button.on .tabstate{color:var(--teal2)}
+.tabhint{margin:12px 0 0;font-size:13.5px;color:var(--mute);text-align:center}
+.what{background:var(--track);border-left:3px solid var(--teal2);border-radius:8px;padding:10px 14px;font-size:15px !important;margin:4px 0 14px !important}.what b{color:var(--teal2)}
+.kpis.kpilead{margin:0 0 22px}.stepbody .cm5stats{margin:0 0 6px;flex-wrap:wrap}.stepbody .mbars{margin-top:6px}

@@ -267,20 +267,25 @@ const ICONS = {
   check: <><rect x="3.5" y="3.5" width="17" height="17" rx="3" /><path d="M8 12.5l3 3 5-6" /></>,
   alert: <><path d="M12 3.5L21.5 20h-19z" /><path d="M12 10v4.5M12 17.5v.1" /></>,
   arrow: <><path d="M4 12h15M13 6l6 6-6 6" /></>,
+  grid3: <><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17" /></>,
+  grid5: <><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><path d="M3.5 6.9h17M3.5 10.3h17M3.5 13.7h17M3.5 17.1h17M6.9 3.5v17M10.3 3.5v17M13.7 3.5v17M17.1 3.5v17" /></>,
 };
 const Icon = ({ n }) => <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[n]}</svg>;
 // Row of icon tabs with one panel underneath; items are [icon, title, body]
-function IconTabs({ id, label, items, numbered }) {
-  const [on, setOn] = useState(0);
-  const [icon, title, body] = items[on];
+function IconTabs({ id, label, items, numbered, collapsible }) {
+  const [on, setOn] = useState(collapsible ? -1 : 0);
+  const pick = i => setOn(collapsible && i === on ? -1 : i);
   return (<>
     <div className="steptabs" role="tablist" aria-label={label}>{items.map(([ic, t], i) => (
-      <button key={t} role="tab" id={`${id}-tab${i}`} aria-selected={i === on} aria-controls={`${id}-panel`} className={i === on ? 'on' : ''} onClick={() => setOn(i)}>
-        <Icon n={ic} /><span>{numbered && <em>{i + 1}</em>}{t}</span></button>))}</div>
-    <div className="steppanel" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab${on}`}>
-      <div className="stepicon"><Icon n={icon} /></div>
-      <div className="stepbody"><h3>{numbered ? `${on + 1}. ` : ''}{title}</h3>{body}</div>
-    </div>
+      <button key={t} role="tab" id={`${id}-tab${i}`} aria-selected={i === on} aria-controls={`${id}-panel`} className={i === on ? 'on' : ''} onClick={() => pick(i)}>
+        <Icon n={ic} /><span>{numbered && <em>{i + 1}</em>}{t}</span>{collapsible && <small className="tabstate">{i === on ? 'Close' : 'Open'}</small>}</button>))}</div>
+    {on < 0 ? <p className="tabhint">Click a tab above to open it.</p> : (() => {
+      const [icon, title, body] = items[on];
+      return <div className="steppanel" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab${on}`}>
+        <div className="stepicon"><Icon n={icon} /></div>
+        <div className="stepbody"><h3>{numbered ? `${on + 1}. ` : ''}{title}</h3>{body}</div>
+      </div>;
+    })()}
   </>);
 }
 function Pipeline() {
@@ -306,6 +311,7 @@ function Pipeline() {
 
 function Results() {
   const cm = [[820, 108, 7], [193, 212, 42], [24, 41, 209]];
+  const cm5 = [[557, 49, 31, 1, 1], [191, 55, 48, 2, 0], [157, 71, 192, 26, 1], [14, 13, 47, 130, 19], [0, 0, 1, 9, 41]];
   const models = [
     ['5-class ResNet-18 baseline', 55.50, 'reference'],
     ['Model 3 · ResNet-101', 74.15, '42.6 M parameters'],
@@ -313,32 +319,36 @@ function Results() {
     ['Model 2 · ResNet-50', 72.83, '23.5 M parameters'],
     ['Model 5 · EfficientNet-B0', 70.23, 'same protocol'],
   ];
+  const tabs = [
+    ['grid3', '3-group confusion matrix', <>
+      <p className="what"><b>What this shows:</b> the final 3-group model's answers for all 1,656 test knees. Each row is a knee's true severity group and each column is the model's answer, so the diagonal holds the correct answers. Healthy or doubtful knees (KL 0–1) are recognised 88% of the time and moderate to severe knees (KL 3–4) 76% of the time, but only 47% of minimal-OA (KL 2) knees are found.</p>
+      <InteractiveCM cm={cm} labels={GROUP_SHORT} start={[1, 0]} unitName="group" />
+      <p className="mini">Accuracy 74.94% (95% CI 72.71–77.12), balanced accuracy 70.47%, macro F1 71.40, QWK 0.730. KL 2 is the hardest group: the boundary with KL 0–1 is uncertain even between expert readers.</p></>],
+    ['grid5', '5-grade confusion matrix', <>
+      <p className="what"><b>What this shows:</b> the same idea for all five KL grades, from Model 4B, the model behind the KL grade in the app. Exact answers sit on the diagonal; the dashed cells beside it are one grade off. 58.9% of knees get the exact grade and 86.7% are within one grade, because the model was trained so that near misses cost less than far-off answers.</p>
+      <div className="cm5stats"><span><b>58.9%</b>exact</span><span><b>86.7%</b>within one</span><span><b>0.711</b>QWK</span><span><b>0.555</b>MAE</span></div>
+      <InteractiveCM cm={cm5} labels={['KL 0', 'KL 1', 'KL 2', 'KL 3', 'KL 4']} five start={[1, 0]} unitName="grade" />
+      <p className="mini">KL 1 ("doubtful") is the hardest grade: 191 of 296 KL 1 knees are read as KL 0, the boundary where expert readers also disagree most. Collapsed to three groups, this model reaches 75.06%, matching the dedicated 3-group pipeline.</p></>],
+    ['bars', 'Why ResNet-18?', <>
+      <p className="what"><b>What this shows:</b> test accuracy of each network design, all trained and tested the same way. Deeper networks with up to four times as many parameters were not more accurate, so the smallest and fastest network, ResNet-18, was used for the final model, which also keeps it light enough to run in a browser.</p>
+      <div className="mbars">{models.map(([n, v, sub]) => (
+        <div key={n} className={n.startsWith('Model 1') ? 'hi' : ''}><span>{n}<small>{sub}</small></span>
+          <div><i style={{ width: `${v}%` }} /></div><em>{v.toFixed(2)}%</em></div>))}
+      </div>
+      <p className="mini">Single-pass test accuracy before flip TTA. ResNet-50 and ResNet-101 were not significantly better (clustered McNemar p = 0.21 and 0.91) but were 2–4× slower and overfit more. EfficientNet-B0 was significantly worse (−3.80 points, p = 0.0015).</p></>],
+  ];
   return (
     <section id="results" className="results">
       <div className="wrap sec">
-        <div className="sec-head"><p className="eyebrow">Results</p><h2>Held-out test performance (n = 1,656)</h2></div>
-        <div className="grid2">
-          <div className="card">
-            <h3>Final 3-group model · confusion matrix</h3>
-            <InteractiveCM cm={cm} labels={GROUP_SHORT} start={[1, 0]} unitName="group" />
-            <p className="mini">Accuracy 74.94% (95% CI 72.71–77.12), balanced accuracy 70.47%, macro F1 71.40, QWK 0.730. KL 2 is the hardest group: the boundary with KL 0–1 is uncertain even between expert readers.</p>
-          </div>
-          <div className="card">
-            <h3>Why ResNet-18? Bigger was not better</h3>
-            <div className="mbars">{models.map(([n, v, s]) => (
-              <div key={n} className={n.startsWith('Model 1') ? 'hi' : ''}><span>{n}<small>{s}</small></span>
-                <div><i style={{ width: `${v}%` }} /></div><em>{v.toFixed(2)}%</em></div>))}
-            </div>
-            <p className="mini">Single-pass test accuracy before flip TTA. ResNet-50 and ResNet-101 were not significantly better (clustered McNemar p = 0.21 and 0.91) but were 2–4× slower and overfit more. EfficientNet-B0 was significantly worse (−3.80 points, p = 0.0015).</p>
-          </div>
-        </div>
-        <CM5 />
-        <div className="kpis">
+        <div className="sec-head"><p className="eyebrow">Results</p><h2>Held-out test performance (n = 1,656)</h2>
+          <p>The headline numbers are below. Open a tab to see the full result, with an explanation of what it shows.</p></div>
+        <div className="kpis kpilead">
+          <div><b>74.9%</b><span>3-group accuracy (final model)</span></div>
           <div><b>58.9%</b><span>exact KL grade (Model 4B)</span></div>
-          <div><b>0.711</b><span>QWK, 5-grade</span></div>
           <div><b>27.2%</b><span>of knees flagged for review</span></div>
           <div><b>81.7%</b><span>correct among unflagged knees</span></div>
         </div>
+        <IconTabs id="results" label="Results" items={tabs} collapsible />
       </div>
     </section>
   );
@@ -679,21 +689,6 @@ function InteractiveCM({ cm, labels, five, start, unitName }) {
     </table></div>
     <p className={`cmexp ${i === j ? 'ok' : d > 1 ? 'far' : ''}`} aria-live="polite">{text} Of all {colTot[j]} knees classified as {labels[j]}, {(100 * v / colTot[j]).toFixed(1)}% had this reference grade.</p>
   </>);
-}
-function CM5() {
-  const cm = [[557, 49, 31, 1, 1], [191, 55, 48, 2, 0], [157, 71, 192, 26, 1], [14, 13, 47, 130, 19], [0, 0, 1, 9, 41]];
-  const lab = ['KL 0', 'KL 1', 'KL 2', 'KL 3', 'KL 4'];
-  return (
-    <div className="card cm5card">
-      <div className="cm5head">
-        <div><h3>5-grade model (Model 4B, ordinal loss) · confusion matrix</h3>
-          <p className="mini">Rows are the reference KL grade, columns the prediction. Shading = share of that row. Most errors land one grade away, which is what the ordinal loss is designed for.</p></div>
-        <div className="cm5stats"><span><b>58.9%</b>exact</span><span><b>86.7%</b>within one</span><span><b>0.711</b>QWK</span><span><b>0.555</b>MAE</span></div>
-      </div>
-      <InteractiveCM cm={cm} labels={lab} five start={[1, 0]} unitName="grade" />
-      <p className="mini">KL 1 ("doubtful") is the hardest grade: 191 of 296 KL 1 knees are read as KL 0, the boundary where expert readers also disagree most. Collapsed to three groups, this model reaches 75.06%, matching the dedicated 3-group pipeline.</p>
-    </div>
-  );
 }
 
 const FIGS = [
