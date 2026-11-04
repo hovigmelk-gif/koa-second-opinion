@@ -9,9 +9,10 @@ ort.env.wasm.numThreads = (self.crossOriginIsolated ? Math.min(4, navigator.hard
 
 const SEEDS = ['seed42', 'seed7', 'seed123'];
 const FILES = [...SEEDS.map(s => `M1_${s}`), ...SEEDS.map(s => `M4B_${s}`)];
-const CACHE = 'koa-models-v1';
-// Models live in Base44 public file storage (the site upload limit is 50 MB)
-const URLS = {"M1_seed42": "https://media.base44.com/files/public/6aeae7497e27e764380491b2/079808c10_M1_seed42.onnx", "M1_seed7": "https://media.base44.com/files/public/6aeae7497e27e764380491b2/eee23bc56_M1_seed7.onnx", "M1_seed123": "https://media.base44.com/files/public/6aeae7497e27e764380491b2/412cd70ab_M1_seed123.onnx", "M4B_seed42": "https://media.base44.com/files/public/6aeae7497e27e764380491b2/5f5492fd5_M4B_seed42.onnx", "M4B_seed7": "https://media.base44.com/files/public/6aeae7497e27e764380491b2/a6305a143_M4B_seed7.onnx", "M4B_seed123": "https://media.base44.com/files/public/6aeae7497e27e764380491b2/c0858ee86_M4B_seed123.onnx", "heads": "https://media.base44.com/files/public/6aeae7497e27e764380491b2/c5aa4e8e7_heads.json"};
+const CACHE = 'koa-models-v2';
+try { caches.delete('koa-models-v1'); } catch { /* old Base44-URL cache, ~135 MB */ }
+// Models are served with the site from public/models/ (fp16.py output + heads.json)
+const URLS = Object.fromEntries([...FILES.map(f => [f, `/models/${f}.onnx`]), ['heads', '/models/heads.json']]);
 let state = null;
 
 async function fetchWithProgress(url, onBytes) {
@@ -30,7 +31,7 @@ async function fetchWithProgress(url, onBytes) {
 
 export async function loadModels(onProgress) {
   if (state) return state;
-  const TOTAL = 6 * 22443424 + 256498; let got = 0;
+  const TOTAL = 6 * 22443424 + 264056; let got = 0;
   const tick = (b) => { got += b; onProgress?.(Math.min(1, got / TOTAL)); };
   const heads = JSON.parse(new TextDecoder().decode(await fetchWithProgress(URLS.heads, tick)));
   const sessions = {};
