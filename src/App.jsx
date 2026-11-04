@@ -110,15 +110,16 @@ function Hero({ load }) {
         <span className="cta-note">{load.ready ? 'Models loaded · ready' : load.err ? 'Model download failed, refresh to retry' : `Preparing models · ${Math.round(load.p * 100)}%`}</span>
       </div>
       <div className="stats">
-        <Stat n="74.9%" l="3-group accuracy" s="1,656 held-out test knees" />
-        <Stat n="0.730" l="Quadratic weighted κ" s="agreement with reference grades" />
-        <Stat n="86.7%" l="KL grade within one" s="5-grade ordinal model" />
-        <Stat n="3.7%" l="Calibration error" s="expected calibration error" />
+        <Stat n="74.9%" l="3-group accuracy" s="1,656 held-out test knees" t="Of 1,656 test knees the model never saw during training, 74.9% were placed in the correct severity group (KL 0–1, KL 2 or KL 3–4). The 95% confidence interval is 72.7–77.1%." />
+        <Stat n="0.730" l="Quadratic weighted κ" s="agreement with reference grades" t="Quadratic weighted kappa measures agreement with the dataset's reference grades, from 0 (no better than chance) to 1 (perfect). It gives partial credit for near misses and penalises far-off answers more; 0.730 is usually described as substantial agreement." />
+        <Stat n="86.7%" l="KL grade within one" s="5-grade ordinal model" t="The five-grade model (Model 4B) gets the exact KL grade right for 58.9% of test knees, and 86.7% of its answers are the right grade or one grade either side." />
+        <Stat n="3.7%" l="Calibration error" s="expected calibration error" t="How far the model's stated confidence is from how often it is actually right; lower is better. On average its confidence is off by 3.7 percentage points, so a result shown as 80% confident is right roughly 80% of the time." />
       </div>
+      <p className="stathint">Hover over or tap a number to see what it means.</p>
     </section>
   );
 }
-const Stat = ({ n, l, s }) => <div className="stat"><b>{n}</b><span>{l}</span><small>{s}</small></div>;
+const Stat = ({ n, l, s, t }) => <Tip className="stat below" t={t}><b>{n}</b><span>{l}</span><small>{s}</small></Tip>;
 
 function Demo({ load }) {
   const [img, setImg] = useState(null);
