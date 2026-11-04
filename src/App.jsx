@@ -247,8 +247,29 @@ const ICONS = {
   scale: <><path d="M12 4v16M6 20h12M5 8h14" /><path d="M5 8l-2.5 6a2.8 2.8 0 0 0 5 0zM19 8l-2.5 6a2.8 2.8 0 0 0 5 0z" /></>,
   bars: <path d="M5 20v-6M10 20V9M15 20v-8M20 20V4M3 20h18" />,
   flag: <path d="M6 21V4h11l-2.5 4L17 12H6" />,
+  book: <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z" /><path d="M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5" /></>,
+  target: <><circle cx="12" cy="12" r="8.5" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" fill="currentColor" /></>,
+  gear: <><circle cx="12" cy="12" r="3" /><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" /></>,
+  database: <><ellipse cx="12" cy="5.5" rx="7.5" ry="2.8" /><path d="M4.5 5.5v13c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8v-13M4.5 12c0 1.5 3.4 2.8 7.5 2.8s7.5-1.3 7.5-2.8" /></>,
+  check: <><rect x="3.5" y="3.5" width="17" height="17" rx="3" /><path d="M8 12.5l3 3 5-6" /></>,
+  alert: <><path d="M12 3.5L21.5 20h-19z" /><path d="M12 10v4.5M12 17.5v.1" /></>,
+  arrow: <><path d="M4 12h15M13 6l6 6-6 6" /></>,
 };
 const Icon = ({ n }) => <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[n]}</svg>;
+// Row of icon tabs with one panel underneath; items are [icon, title, body]
+function IconTabs({ id, label, items, numbered }) {
+  const [on, setOn] = useState(0);
+  const [icon, title, body] = items[on];
+  return (<>
+    <div className="steptabs" role="tablist" aria-label={label}>{items.map(([ic, t], i) => (
+      <button key={t} role="tab" id={`${id}-tab${i}`} aria-selected={i === on} aria-controls={`${id}-panel`} className={i === on ? 'on' : ''} onClick={() => setOn(i)}>
+        <Icon n={ic} /><span>{numbered && <em>{i + 1}</em>}{t}</span></button>))}</div>
+    <div className="steppanel" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab${on}`}>
+      <div className="stepicon"><Icon n={icon} /></div>
+      <div className="stepbody"><h3>{numbered ? `${on + 1}. ` : ''}{title}</h3>{body}</div>
+    </div>
+  </>);
+}
 function Pipeline() {
   const steps = [
     ['contrast', 'Contrast', 'Every X-ray is exposed a little differently. This step evens out the brightness and sharpens local contrast, so bone edges and the joint space look consistent from image to image.', 'CLAHE (clip limit 0.02, 8 × 8 tiles) evens out exposure across the joint, exactly as at training time.'],
@@ -258,20 +279,13 @@ function Pipeline() {
     ['bars', 'Grade', 'A second network estimates the exact KL grade from 0 to 4. It was trained so that being one grade off costs less than being several grades off, which keeps its mistakes close to the truth.', 'A second ResNet-18 trained with an ordinal loss estimates KL 0–4, penalising far-off grades more than near misses.'],
     ['flag', 'Explain + flag', 'A heat map shows which parts of the X-ray drove the decision, and automatic checks warn you when the AI is unsure, when the two models disagree or when the image quality is poor.', 'Grad-CAM shows where Model 1 looked; pre-declared rules flag low confidence (< 60%), model disagreement and poor image quality.'],
   ];
-  const [on, setOn] = useState(0);
-  const [icon, title, plain, tech] = steps[on];
   return (
     <section id="how" className="wrap sec">
       <div className="sec-head"><p className="eyebrow">How it works</p><h2>From radiograph to second opinion in six steps</h2>
         <p>Hover over (or tap) any part of the diagram for a plain-language explanation, then click through the six steps below.</p></div>
       <Overview />
-      <div className="steptabs" role="tablist" aria-label="Pipeline steps">{steps.map(([ic, t], i) => (
-        <button key={t} role="tab" id={`steptab${i}`} aria-selected={i === on} aria-controls="steppanel" className={i === on ? 'on' : ''} onClick={() => setOn(i)}>
-          <Icon n={ic} /><span><em>{i + 1}</em>{t}</span></button>))}</div>
-      <div className="steppanel" id="steppanel" role="tabpanel" aria-labelledby={`steptab${on}`}>
-        <div className="stepicon"><Icon n={icon} /></div>
-        <div><h3>{on + 1}. {title}</h3><p>{plain}</p><p className="tech"><b>Technical detail:</b> {tech}</p></div>
-      </div>
+      <IconTabs id="steps" label="Pipeline steps" numbered items={steps.map(([ic, t, plain, tech]) =>
+        [ic, t, <><p>{plain}</p><p className="tech"><b>Technical detail:</b> {tech}</p></>])} />
       <p className="note">Trained with two-stage transfer learning (head, then all layers), class weights of 1/√n and light augmentation (±10° rotation, ±5 px shift), on the official kneeKL224 split: 5,778 training, 826 validation and 1,656 test knees with no patient overlap. Every model choice was made on validation data; the test set was used once per model.</p>
     </section>
   );
@@ -376,46 +390,39 @@ function About() {
     ['Slightly optimistic estimates', 'The same test set was used across several experiments, so some test results informed later decisions and reported performance may be slightly optimistic.'],
     ['Images outside the training data', 'Other crops, views or photographs differ from the training data; the input checks flag such images, but cannot guarantee a reliable result.'],
   ];
+  const topics = [
+    ['book', 'Background', <>
+      <p>Knee osteoarthritis (KOA) is the progressive degeneration of the knee joint, with loss of articular cartilage and structural changes that cause pain, stiffness, swelling and reduced mobility. Osteoarthritis affected an estimated 595 million people worldwide in 2020 (7.6% of the global population), with the knee the most affected joint, and around 2.1 million Australians in 2022.</p>
+      <p>Severity is graded on X-rays with the Kellgren–Lawrence (KL) scale from 0 (no features) to 4 (severe). Manual grading takes time and expertise, and readers often disagree, especially at the boundary between KL 0, KL 1 and KL 2. Convolutional neural networks can learn radiographic features such as osteophytes and joint-space narrowing directly from images, which may make grading more consistent.</p></>],
+    ['target', 'Objectives', <>
+      <p>To develop and optimise a CNN that automatically classifies knee osteoarthritis severity from X-ray images according to the Kellgren–Lawrence system, and to present it as a clinician-facing second opinion.</p>
+      <p>Six specifications were set in advance, covering data integrity, three-group accuracy, choice of architecture, five-grade accuracy, explainability and a working clinical prototype (see the Results tab).</p></>],
+    ['gear', 'Model development', <>
+      <p>Models were built in MATLAB with the Deep Learning Toolbox using transfer learning from pretrained networks. Radiographs were contrast-enhanced with CLAHE, kept at 224 × 224 pixels and copied into three channels; training images were augmented with random rotations (±10°) and shifts (±5 pixels).</p>
+      <p>Four architectures were compared under an identical protocol: ResNet-18, ResNet-50, ResNet-101 and EfficientNet-B0, each trained with three random seeds and combined into an ensemble. Class imbalance was addressed with class-weighted loss, grouping the five grades into three severity groups and balanced sampling. Candidate pipelines were chosen on validation data only; the final pipeline was then tested once. The trained networks were exported to ONNX so that the same pipeline runs in the browser.</p></>],
+    ['database', 'Dataset', <>
+      <p>The Knee Osteoarthritis Severity Grading Dataset (Chen, 2018) contains 8,260 knee radiographs from the Osteoarthritis Initiative, cropped to the knee at 224 × 224 pixels and labelled KL 0–4. The official kneeKL224 split was used: 5,778 training, 826 validation and 1,656 test images, with no patient in more than one subset.</p>
+      <p>The grades are strongly imbalanced (3,253 KL 0 images against 251 KL 4). The main output therefore groups them into three severity categories, KL 0–1, KL 2 and KL 3–4, while a second model estimates the full five-grade KL score.</p></>],
+    ['check', 'Results', <>
+      <p className="mini lead">Final results on the 1,656 held-out test radiographs (828 patients); 95% confidence interval from a patient-level bootstrap.</p>
+      <div className="tablewrap"><table className="ver specs">
+        <thead><tr><th>Spec.</th><th>Area</th><th>Target</th><th>Test result</th><th>Status</th></tr></thead>
+        <tbody>{specs.map(r => <tr key={r[0]}><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td><span className={`status ${r[4].startsWith('Met') || r[4] === 'Answered' ? 'ok' : 'part'}`}>{r[4]}</span></td></tr>)}</tbody>
+      </table></div>
+      <p className="mini">In short: the compact ResNet-18 matched or outperformed deeper and alternative networks, most errors were between neighbouring grades, and Grad-CAM attention was concentrated on the knee joint. Knees near the KL 1/KL 2 boundary remained the most common source of error.</p></>],
+    ['alert', 'Limitations', <ul className="limitlist">{limits.map(([t, d]) => <li key={t}><b>{t}</b>{d}</li>)}</ul>],
+    ['arrow', 'Next steps', <ol className="nextsteps">
+      <li>A blinded clinician re-read of the 137 suspect test labels, to separate label error from model error at the KL 1/KL 2 boundary.</li>
+      <li>External validation on an independent cohort, such as the Multicenter Osteoarthritis Study.</li>
+      <li>Technical changes for the minority grades, including higher-resolution joint-centred crops and medical-domain pretraining.</li>
+      <li>A clinician reader study of the prototype measuring agreement, grading time and automation bias.</li>
+    </ol>],
+  ];
   return (
     <section id="about" className="wrap sec about">
       <div className="sec-head"><p className="eyebrow">About the project</p><h2>Why this project exists, and how it was built</h2>
-        <p>This website presents the outcome of the project <i>{REPORT_TITLE}</i>.</p></div>
-      <div className="grid2 aboutgrid">
-        <div className="card"><h3>Project background</h3>
-          <p>Knee osteoarthritis (KOA) is the progressive degeneration of the knee joint, with loss of articular cartilage and structural changes that cause pain, stiffness, swelling and reduced mobility. Osteoarthritis affected an estimated 595 million people worldwide in 2020 (7.6% of the global population), with the knee the most affected joint, and around 2.1 million Australians in 2022.</p>
-          <p>Severity is graded on X-rays with the Kellgren–Lawrence (KL) scale from 0 (no features) to 4 (severe). Manual grading takes time and expertise, and readers often disagree, especially at the boundary between KL 0, KL 1 and KL 2. Convolutional neural networks can learn radiographic features such as osteophytes and joint-space narrowing directly from images, which may make grading more consistent.</p></div>
-        <div className="card"><h3>Project objectives</h3>
-          <p>To develop and optimise a CNN that automatically classifies knee osteoarthritis severity from X-ray images according to the Kellgren–Lawrence system, and to present it as a clinician-facing second opinion.</p>
-          <p>Six specifications were set in advance, covering data integrity, three-group accuracy, choice of architecture, five-grade accuracy, explainability and a working clinical prototype (see the results below).</p></div>
-        <div className="card"><h3>Model development</h3>
-          <p>Models were built in MATLAB with the Deep Learning Toolbox using transfer learning from pretrained networks. Radiographs were contrast-enhanced with CLAHE, kept at 224 × 224 pixels and copied into three channels; training images were augmented with random rotations (±10°) and shifts (±5 pixels).</p>
-          <p>Four architectures were compared under an identical protocol: ResNet-18, ResNet-50, ResNet-101 and EfficientNet-B0, each trained with three random seeds and combined into an ensemble. Class imbalance was addressed with class-weighted loss, grouping the five grades into three severity groups and balanced sampling. Candidate pipelines were chosen on validation data only; the final pipeline was then tested once. The trained networks were exported to ONNX so that the same pipeline runs in the browser.</p></div>
-        <div className="card"><h3>Dataset</h3>
-          <p>The Knee Osteoarthritis Severity Grading Dataset (Chen, 2018) contains 8,260 knee radiographs from the Osteoarthritis Initiative, cropped to the knee at 224 × 224 pixels and labelled KL 0–4. The official kneeKL224 split was used: 5,778 training, 826 validation and 1,656 test images, with no patient in more than one subset.</p>
-          <p>The grades are strongly imbalanced (3,253 KL 0 images against 251 KL 4). The main output therefore groups them into three severity categories, KL 0–1, KL 2 and KL 3–4, while a second model estimates the full five-grade KL score.</p></div>
-      </div>
-
-      <div className="card abouttable">
-        <h3>Results against the project specifications</h3>
-        <p className="mini">Final results on the 1,656 held-out test radiographs (828 patients); 95% confidence interval from a patient-level bootstrap.</p>
-        <div className="tablewrap"><table className="ver specs">
-          <thead><tr><th>Spec.</th><th>Area</th><th>Target</th><th>Test result</th><th>Status</th></tr></thead>
-          <tbody>{specs.map(s => <tr key={s[0]}><td>{s[0]}</td><td>{s[1]}</td><td>{s[2]}</td><td>{s[3]}</td><td><span className={`status ${s[4].startsWith('Met') || s[4] === 'Answered' ? 'ok' : 'part'}`}>{s[4]}</span></td></tr>)}</tbody>
-        </table></div>
-        <p className="mini">In short: the compact ResNet-18 matched or outperformed deeper and alternative networks, most errors were between neighbouring grades, and Grad-CAM attention was concentrated on the knee joint. Knees near the KL 1/KL 2 boundary remained the most common source of error.</p>
-      </div>
-
-      <h3 className="abouth">Model limitations</h3>
-      <ul className="limitlist">{limits.map(([t, d]) => <li key={t}><b>{t}</b>{d}</li>)}</ul>
-
-      <div className="card aboutnext"><h3>Next steps</h3>
-        <ol className="nextsteps">
-          <li>A blinded clinician re-read of the 137 suspect test labels, to separate label error from model error at the KL 1/KL 2 boundary.</li>
-          <li>External validation on an independent cohort, such as the Multicenter Osteoarthritis Study.</li>
-          <li>Technical changes for the minority grades, including higher-resolution joint-centred crops and medical-domain pretraining.</li>
-          <li>A clinician reader study of the prototype measuring agreement, grading time and automation bias.</li>
-        </ol></div>
-
+        <p>This website presents the outcome of the project <i>{REPORT_TITLE}</i>. Choose a topic below to read more.</p></div>
+      <IconTabs id="about" label="About the project" items={topics} />
       <Disclaimer />
     </section>
   );

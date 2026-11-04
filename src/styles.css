@@ -185,7 +185,7 @@ h2{font-size:clamp(28px,3.4vw,40px);line-height:1.15}h3{font-size:14px;font-weig
 body{overflow-x:clip}
 .ovhead .tip{flex:1;display:flex}.ovhead .tip span{flex:1}.ovmet .tip span,.ovpills .tip span{display:block}
 /* How it works: six steps as icon tabs */
-.steptabs{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.steptabs{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px}
 .steptabs button{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 6px;color:var(--ink2);font:500 14px var(--sans);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
 .steptabs button:hover{border-color:#2c6b78;color:var(--ink)}.steptabs button svg{color:var(--teal2)}
 .steptabs button span{display:flex;gap:6px;align-items:baseline;text-align:center}.steptabs em{font:500 12px var(--mono);font-style:normal;color:var(--teal2)}
@@ -194,5 +194,9 @@ body{overflow-x:clip}
 .stepicon{flex:none;width:54px;height:54px;border-radius:14px;display:grid;place-items:center;background:rgba(20,184,166,.12);color:var(--teal2)}.stepicon svg{width:28px;height:28px}
 .steppanel h3{margin:0 0 6px}.steppanel p{margin:0 0 10px;color:var(--ink);font-size:15.5px}.steppanel .tech{margin:0;color:var(--mute);font-size:13.5px}.steppanel .tech b{color:var(--ink2);font-weight:600}
 .aboutnext{margin-bottom:18px}
-@media (max-width:980px){.steptabs{grid-template-columns:repeat(3,1fr)}}
+
 @media (max-width:760px){.steppanel{flex-direction:column;padding:18px}.steptabs button{font-size:13px}}
+.stepbody{flex:1;min-width:0}.steppanel p.mini{font-size:12.5px;color:var(--mute);margin:10px 0 0}.steppanel p.mini.lead{margin:0 0 6px}
+.steppanel .limitlist{grid-template-columns:1fr 1fr;margin:0}.steppanel .limitlist li{background:var(--track)}.steppanel .nextsteps{color:var(--ink)}
+.about .steptabs{margin-bottom:0}.about .disclaimer{margin-top:18px}
+@media (max-width:760px){.steppanel .limitlist{grid-template-columns:1fr}}
