@@ -16,6 +16,19 @@ const SAMPLES = [
   { file: 'KL4_9012867R.png', label: 'KL 4', note: 'Severe' },
 ];
 const pct = (v, d = 1) => `${(100 * v).toFixed(d)}%`;
+// Runs one sample knee through the real models (cached; queued so only one analysis runs at a time)
+const sampleCache = {};
+let sampleQueue = Promise.resolve();
+function runSample(file) {
+  if (sampleCache[file]) return sampleCache[file];
+  const job = sampleQueue.then(async () => {
+    const r = await analyse(await decodeImage(await (await fetch(`/samples/${file}`)).blob()));
+    return { ...r, layers: renderLayers(r.g, r.cam) };
+  });
+  sampleQueue = job.catch(() => {});
+  job.catch(() => { delete sampleCache[file]; });
+  return (sampleCache[file] = job);
+}
 
 export default function App() {
   const [route, setRoute] = useState(() => (location.hash === '#/app' ? 'app' : 'home'));
@@ -40,9 +53,9 @@ export default function App() {
         <Hero load={load} />
         <About />
         <Pipeline />
-        <KLScale />
+        <KLScale load={load} />
         <Results />
-        <Verification />
+        <Verification load={load} />
         <Gallery />
         <CtaBand load={load} />
         <Reviews />
@@ -307,14 +320,7 @@ function Results() {
         <div className="grid2">
           <div className="card">
             <h3>Final 3-group model · confusion matrix</h3>
-            <table className="cm">
-              <thead><tr><th>True ↓ / Pred →</th>{GROUP_SHORT.map(g => <th key={g}>{g}</th>)}<th>Recall</th></tr></thead>
-              <tbody>{cm.map((row, i) => {
-                const tot = row.reduce((a, b) => a + b, 0);
-                return <tr key={i}><th>{GROUP_SHORT[i]}</th>{row.map((v, j) =>
-                  <td key={j} style={{ '--a': v / tot }} className={i === j ? 'd' : ''}>{v}</td>)}<td className="rc">{pct(row[i] / tot)}</td></tr>;
-              })}</tbody>
-            </table>
+            <InteractiveCM cm={cm} labels={GROUP_SHORT} start={[1, 0]} unitName="group" />
             <p className="mini">Accuracy 74.94% (95% CI 72.71–77.12), balanced accuracy 70.47%, macro F1 71.40, QWK 0.730. KL 2 is the hardest group: the boundary with KL 0–1 is uncertain even between expert readers.</p>
           </div>
           <div className="card">
@@ -338,7 +344,7 @@ function Results() {
   );
 }
 
-function Verification() {
+function Verification({ load }) {
   const rows = [
     ['9003175L', 'KL 0', 'KL 0–1', 97.59, 97.57, 'KL 0'],
     ['9001400L', 'KL 1', 'KL 0–1', 85.25, 85.14, 'KL 0'],
@@ -346,15 +352,42 @@ function Verification() {
     ['9011053L', 'KL 3', 'KL 3–4', 96.91, 96.94, 'KL 3'],
     ['9012867R', 'KL 4', 'KL 3–4', 98.52, 98.52, 'KL 4'],
   ];
+  const [live, setLive] = useState({});
+  const [busy, setBusy] = useState(false);
+  async function run() {
+    setBusy(true);
+    for (const r of rows) {
+      try { const res = await runSample(SAMPLES.find(x => x.file.includes(r[0])).file); setLive(l => ({ ...l, [r[0]]: res })); }
+      catch { setLive(l => ({ ...l, [r[0]]: 'error' })); }
+    }
+    setBusy(false);
+  }
+  const ok = r => { const x = live[r[0]]; return x && x !== 'error' && GROUP_SHORT[x.grp] === r[2] && `KL ${x.kl}` === r[5]; };
+  const done = rows.every(r => live[r[0]]);
+  const diffs = rows.filter(r => ok(r)).map(r => Math.abs(100 * live[r[0]].P3[GROUP_SHORT.indexOf(r[2])] - r[3]));
   return (
     <section className="wrap sec">
       <div className="sec-head"><p className="eyebrow">Verification</p><h2>The browser gives the same answers as the MATLAB app</h2>
         <p>The trained MATLAB networks were exported to ONNX, cut at the last convolutional block; pooling, the classifier, the decision rule and Grad-CAM are re-implemented here and checked against MATLAB on reference knees.</p></div>
       <div className="card tablewrap">
+        <div className="verbar">
+          <p className="mini">Don't take our word for it: run the five reference knees through the real models on your own device and compare with MATLAB.</p>
+          <button className="btn primary" disabled={!load.ready || busy} onClick={run}>
+            {busy ? 'Running on this device…' : !load.ready ? `Loading models · ${Math.round(load.p * 100)}%` : done ? 'Run again' : 'Run the check on this device'}</button>
+        </div>
         <table className="ver">
-          <thead><tr><th>Test knee</th><th>Reference</th><th>3-group (both)</th><th>MATLAB</th><th>Browser</th><th>KL grade (both)</th></tr></thead>
-          <tbody>{rows.map(r => <tr key={r[0]}><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3].toFixed(2)}%</td><td>{r[4].toFixed(2)}%</td><td>{r[5]}</td></tr>)}</tbody>
+          <thead><tr><th>Test knee</th><th>Reference</th><th>3-group (both)</th><th>MATLAB</th><th>Browser</th><th>This device</th><th>KL grade (both)</th></tr></thead>
+          <tbody>{rows.map(r => {
+            const x = live[r[0]];
+            return <tr key={r[0]}><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3].toFixed(2)}%</td><td>{r[4].toFixed(2)}%</td>
+              <td className={`livecol ${x ? (ok(r) ? 'good' : 'bad') : ''}`}>{!x ? (busy ? '…' : '—') : x === 'error' ? 'error'
+                : <>{(100 * x.P3[GROUP_SHORT.indexOf(r[2])]).toFixed(2)}% <span>{ok(r) ? '✓' : `✗ ${GROUP_SHORT[x.grp]}, KL ${x.kl}`}</span></>}</td>
+              <td>{r[5]}</td></tr>;
+          })}</tbody>
         </table>
+        {done && <p className={`verresult ${diffs.length === rows.length ? 'good' : 'bad'}`} aria-live="polite">{diffs.length === rows.length
+          ? `All 5 knees match MATLAB on this device: same severity group and same KL grade, with probabilities within ${Math.max(...diffs).toFixed(2)} percentage points.`
+          : `${diffs.length} of 5 knees matched on this device.`}</p>}
         <div className="fullcheck"><b>Full test set, all 1,656 knees:</b> the browser pipeline reproduces the MATLAB results exactly: 74.94% 3-group accuracy with the identical confusion matrix, 58.88% exact KL grade, 86.65% within one grade, and the same review flags (27.2% flagged, 81.7% correct when unflagged).</div>
         <p className="mini">CLAHE output is bit-identical to MATLAB adapthisteq; Grad-CAM maps correlate at r = 0.9999. The full-test-set check used full-precision weights; the live site stores them at half precision to halve the download, which moved probabilities by at most 0.16 percentage points on the reference knees.</p>
       </div>
@@ -446,7 +479,7 @@ function Footer() {
   );
 }
 
-function KLScale() {
+function KLScale({ load }) {
   const kl = [
     ['KL 0', 'None', 'No radiographic features of osteoarthritis.', 'KL 0–1'],
     ['KL 1', 'Doubtful', 'Possible osteophytic lipping; doubtful joint-space narrowing.', 'KL 0–1'],
@@ -454,13 +487,60 @@ function KLScale() {
     ['KL 3', 'Moderate', 'Multiple osteophytes, definite narrowing, some sclerosis.', 'KL 3–4'],
     ['KL 4', 'Severe', 'Large osteophytes, marked narrowing, severe sclerosis, bone deformity.', 'KL 3–4'],
   ];
+  const [sel, setSel] = useState(-1);
   return (
     <section className="wrap sec">
       <div className="sec-head"><p className="eyebrow">The Kellgren–Lawrence scale</p><h2>Five grades, three clinical groups</h2>
-        <p>The main output groups the five KL grades the way treatment decisions do; the 5-grade model gives the finer estimate.</p></div>
+        <p>The main output groups the five KL grades the way treatment decisions do; the 5-grade model gives the finer estimate. Click a grade to see a real held-out test knee at that grade and where the model looked.</p></div>
       <div className="klgrid">{kl.map(([g, n, d, grp], i) => (
-        <div key={g} className={`kl k${i}`}><i /><b>{g}</b><span>{n}</span><p>{d}</p><small>Group {grp}</small></div>))}</div>
+        <button key={g} className={`kl k${i} ${sel === i ? 'on' : ''}`} aria-expanded={sel === i} onClick={() => setSel(sel === i ? -1 : i)}>
+          <i /><b>{g}</b><span>{n}</span><p>{d}</p><small>Group {grp}</small><em className="klmore">{sel === i ? 'Hide example' : 'Show example X-ray →'}</em></button>))}</div>
+      {sel >= 0 && <KLExample key={sel} s={SAMPLES[sel]} desc={kl[sel][2]} load={load} />}
     </section>
+  );
+}
+const VIEW_TEXT = {
+  raw: 'The X-ray as stored in the dataset: a 224 × 224 pixel crop of the knee joint.',
+  clahe: 'After contrast enhancement (CLAHE), which is what the model actually sees: bone edges and the joint space are easier to make out.',
+  cam: 'Grad-CAM heat map of the 3-group model, averaged over its three networks: red marks the regions that most influenced the decision, blue the least. It shows where the model looked, not where the disease is.',
+};
+function KLExample({ s, desc, load }) {
+  const [view, setView] = useState('cam');
+  const [res, setRes] = useState(null);
+  const [err, setErr] = useState('');
+  const cv = useRef(null), box = useRef(null);
+  useEffect(() => { box.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, []);
+  useEffect(() => {
+    if (!load.ready) return;
+    let live = true;
+    runSample(s.file).then(r => live && setRes(r)).catch(e => live && setErr(e.message));
+    return () => { live = false; };
+  }, [s.file, load.ready]);
+  useEffect(() => {
+    if (res && cv.current && view !== 'raw') cv.current.getContext('2d').putImageData(view === 'cam' ? res.layers.over : res.layers.base, 0, 0);
+  }, [res, view]);
+  const id = s.file.replace(/^KL\d_|\.png$/g, ''), ref = +s.file[2];
+  const eff = res ? view : 'raw', shown = eff !== 'raw';
+  return (
+    <div className="klex card" ref={box}>
+      <div className="klimg">
+        {shown ? <canvas ref={cv} width="224" height="224" aria-label={`${eff === 'cam' ? 'Grad-CAM overlay' : 'Contrast-enhanced X-ray'} of test knee ${id}`} />
+          : <img src={`/samples/${s.file}`} alt={`Held-out test knee ${id}, reference grade ${s.label}`} />}
+        {eff === 'cam' && <div className="legend"><span>Lower influence</span><i /><span>Higher influence</span></div>}
+      </div>
+      <div className="klinfo">
+        <h3>{s.label} example · test knee {id} ({id.endsWith('L') ? 'left' : 'right'})</h3>
+        <p className="mini">A held-out knee from the OAI kneeKL224 test set, never seen during training. Reference grade {s.label}: {desc.charAt(0).toLowerCase() + desc.slice(1)}</p>
+        <div className="seg klseg">{[['raw', 'Original'], ['clahe', 'Contrast-enhanced'], ['cam', 'Grad-CAM']].map(([k, l]) =>
+          <button key={k} className={eff === k ? 'on' : ''} disabled={k !== 'raw' && !res} onClick={() => setView(k)}>{l}</button>)}</div>
+        <p className="klview">{VIEW_TEXT[eff]}</p>
+        {res ? <div className="klres">
+          <div><small>3-group model</small><b>{GROUPS[res.grp]}</b><span>{pct(res.P3[res.grp])} probability</span></div>
+          <div><small>5-grade model</small><b>KL {res.kl}</b><span>{pct(res.P5[res.kl])} probability · {res.kl === ref ? 'matches the reference' : `reference is KL ${ref}`}</span></div>
+        </div> : <p className="mini">{err ? `The model could not run here: ${err}` : load.ready ? 'Running the models on this knee in your browser…' : `The Grad-CAM view appears once the models have loaded (${Math.round(load.p * 100)}%).`}</p>}
+        <p className="mini">Computed live in your browser by the same models used in the app. Research prototype, not for clinical use.</p>
+      </div>
+    </div>
   );
 }
 
@@ -559,10 +639,35 @@ function Connect() {
   );
 }
 
+const WORDS = ['', 'one', 'two', 'three', 'four'];
+function InteractiveCM({ cm, labels, five, start, unitName }) {
+  const [sel, setSel] = useState(start);
+  const [unit, setUnit] = useState('n');
+  const colTot = labels.map((_, j) => cm.reduce((a, r) => a + r[j], 0));
+  const [i, j] = sel, tot = cm[i].reduce((a, b) => a + b, 0), v = cm[i][j], d = Math.abs(i - j);
+  const text = i === j
+    ? `Correct: ${v} of the ${tot} knees with reference grade ${labels[i]} were classified as ${labels[i]} (${(100 * v / tot).toFixed(1)}%).`
+    : `${v} of the ${tot} knees with reference grade ${labels[i]} (${(100 * v / tot).toFixed(1)}%) were classified as ${labels[j]}, ${WORDS[d]} ${unitName}${d > 1 ? 's' : ''} ${j < i ? 'lower' : 'higher'} than the reference.`;
+  return (<>
+    <div className="cmbar"><span className="mini">Hover over or tap a cell to explain it.</span>
+      <div className="seg">{[['n', 'Counts'], ['p', 'Row %']].map(([k, l]) => <button key={k} className={unit === k ? 'on' : ''} onClick={() => setUnit(k)}>{l}</button>)}</div></div>
+    <div className="tablewrap"><table className={`cm cmi ${five ? 'cm5' : ''}`}>
+      <thead><tr><th>True ↓ / Pred →</th>{labels.map(g => <th key={g}>{g}</th>)}<th>Recall</th></tr></thead>
+      <tbody>{cm.map((row, a) => {
+        const t = row.reduce((x, y) => x + y, 0);
+        return <tr key={a}><th>{labels[a]}{five && <small>n={t}</small>}</th>{row.map((c, b) =>
+          <td key={b} tabIndex={0} style={{ '--a': c / t }} className={`${a === b ? 'd' : ''} ${five && Math.abs(a - b) === 1 ? 'n1' : ''} ${a === i && b === j ? 'sel' : ''}`}
+            onMouseEnter={() => setSel([a, b])} onFocus={() => setSel([a, b])} onClick={() => setSel([a, b])}>{unit === 'p' ? `${Math.round(100 * c / t)}%` : c}</td>)}
+          <td className="rc">{(100 * row[a] / t).toFixed(1)}%</td></tr>;
+      })}
+      {five && <tr className="prec"><th>Precision</th>{cm.map((r, b) => <td key={b}>{(100 * cm[b][b] / colTot[b]).toFixed(1)}%</td>)}<td /></tr>}</tbody>
+    </table></div>
+    <p className={`cmexp ${i === j ? 'ok' : d > 1 ? 'far' : ''}`} aria-live="polite">{text} Of all {colTot[j]} knees classified as {labels[j]}, {(100 * v / colTot[j]).toFixed(1)}% had this reference grade.</p>
+  </>);
+}
 function CM5() {
   const cm = [[557, 49, 31, 1, 1], [191, 55, 48, 2, 0], [157, 71, 192, 26, 1], [14, 13, 47, 130, 19], [0, 0, 1, 9, 41]];
   const lab = ['KL 0', 'KL 1', 'KL 2', 'KL 3', 'KL 4'];
-  const colTot = lab.map((_, j) => cm.reduce((a, r) => a + r[j], 0));
   return (
     <div className="card cm5card">
       <div className="cm5head">
@@ -570,16 +675,7 @@ function CM5() {
           <p className="mini">Rows are the reference KL grade, columns the prediction. Shading = share of that row. Most errors land one grade away, which is what the ordinal loss is designed for.</p></div>
         <div className="cm5stats"><span><b>58.9%</b>exact</span><span><b>86.7%</b>within one</span><span><b>0.711</b>QWK</span><span><b>0.555</b>MAE</span></div>
       </div>
-      <div className="tablewrap"><table className="cm cm5">
-        <thead><tr><th>True ↓ / Pred →</th>{lab.map(g => <th key={g}>{g}</th>)}<th>Recall</th></tr></thead>
-        <tbody>{cm.map((row, i) => {
-          const tot = row.reduce((a, b) => a + b, 0);
-          return <tr key={i}><th>{lab[i]} <small>n={tot}</small></th>{row.map((v, j) =>
-            <td key={j} style={{ '--a': v / tot }} className={`${i === j ? 'd' : ''} ${Math.abs(i - j) === 1 ? 'n1' : ''}`} title={`${v} of ${tot} (${(100 * v / tot).toFixed(1)}%)`}>{v}</td>)}
-            <td className="rc">{(100 * row[i] / tot).toFixed(1)}%</td></tr>;
-        })}
-        <tr className="prec"><th>Precision</th>{cm.map((r, j) => <td key={j}>{(100 * cm[j][j] / colTot[j]).toFixed(1)}%</td>)}<td /></tr></tbody>
-      </table></div>
+      <InteractiveCM cm={cm} labels={lab} five start={[1, 0]} unitName="grade" />
       <p className="mini">KL 1 ("doubtful") is the hardest grade: 191 of 296 KL 1 knees are read as KL 0, the boundary where expert readers also disagree most. Collapsed to three groups, this model reaches 75.06%, matching the dedicated 3-group pipeline.</p>
     </div>
   );

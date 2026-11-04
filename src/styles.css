@@ -200,3 +200,19 @@ body{overflow-x:clip}
 .steppanel .limitlist{grid-template-columns:1fr 1fr;margin:0}.steppanel .limitlist li{background:var(--track)}.steppanel .nextsteps{color:var(--ink)}
 .about .steptabs{margin-bottom:0}.about .disclaimer{margin-top:18px}
 @media (max-width:760px){.steppanel .limitlist{grid-template-columns:1fr}}
+/* Interactive confusion matrices */
+.cmbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:6px 0 8px}.cmbar .mini{margin:0}
+.cmi td:not(.rc){cursor:pointer;transition:outline-color .1s}.cmi td.sel{outline:2px solid #f2a93b !important;outline-offset:-2px}.cmi td:focus{outline:2px solid var(--teal2);outline-offset:-2px}
+.cmexp{margin:10px 0 0;min-height:66px;font-size:14px;line-height:1.55;color:var(--ink);background:var(--track);border-left:3px solid #f2a93b;border-radius:8px;padding:10px 14px}.cmexp.ok{border-left-color:var(--teal2)}.cmexp.far{border-left-color:#ef4444}
+/* KL scale: clickable grades with an example knee */
+button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;transition:border-color .15s,transform .15s}button.kl:hover{border-color:#2c6b78;transform:translateY(-2px)}button.kl.on{border-color:var(--teal2);background:rgba(20,184,166,.08)}
+.klmore{display:block;margin-top:10px;font:500 12.5px var(--sans);font-style:normal;color:var(--teal2)}
+.klex{display:grid;grid-template-columns:minmax(220px,340px) 1fr;gap:24px;margin-top:16px;align-items:start}
+.klimg img,.klimg canvas{width:100%;aspect-ratio:1;display:block;border-radius:12px;image-rendering:auto;background:#000}
+.klinfo h3{margin:0 0 4px}.klinfo .mini:first-of-type{margin-top:0}.klseg{display:inline-flex;margin:12px 0 0}.klview{font-size:14.5px;color:var(--ink2);margin:10px 0 14px}
+.klres{display:grid;grid-template-columns:1fr 1fr;gap:10px}.klres>div{background:var(--track);border:1px solid var(--line);border-radius:10px;padding:10px 12px}.klres small{display:block;font-size:11.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}.klres b{display:block;color:#fff;margin:2px 0}.klres span{font-size:12.5px;color:var(--ink2)}
+/* Verification: live check */
+.verbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:10px}.verbar .mini{margin:0;max-width:560px;font-size:13.5px;color:var(--ink2)}
+.livecol{white-space:nowrap}.livecol span{margin-left:4px}.livecol.good{color:#86efac}.livecol.bad{color:#fca5a5}
+.verresult{margin:12px 0 0;border-radius:8px;padding:10px 14px;font-size:14px}.verresult.good{background:rgba(34,197,94,.12);color:#86efac}.verresult.bad{background:rgba(239,68,68,.12);color:#fca5a5}
+@media (max-width:760px){.klex{grid-template-columns:1fr}.klres{grid-template-columns:1fr}}
