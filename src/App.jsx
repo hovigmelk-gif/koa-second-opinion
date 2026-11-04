@@ -413,7 +413,7 @@ function Footer() {
     <footer className="foot">
       <div className="wrap">
         <div className="footgrid">
-          <div><b className="footname">Hovig Melkonyants</b><span>Biomedical Engineering (Honours)</span><span>University of Technology Sydney (UTS)</span></div>
+          <div><b className="footname">Hovig Melkonyants</b><span>Bachelor of Engineering (Honours)</span><span>Major: Biomedical Engineering</span><span>University of Technology Sydney (UTS)</span></div>
           <div><h4>Project</h4><span>Knee Osteoarthritis Severity Classification Using CNNs</span><span>Advanced Biomedical Engineering Studio B · Group 16 · 2026</span>
             <small>Developed as part of <i>{REPORT_TITLE}</i>. Model development and optimisation undertaken for the Group 16 Knee Osteoarthritis Project.</small></div>
           <div><h4>Technology</h4><span>MATLAB Deep Learning Toolbox</span><span>ONNX Runtime Web</span></div>
