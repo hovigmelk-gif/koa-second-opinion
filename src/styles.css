@@ -248,6 +248,15 @@ button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;t
 .dfbranch{flex:1.1 1 0;min-width:0;display:grid;gap:5px}.dfstep.small{flex-direction:row;justify-content:center;padding:6px 4px;font-size:11.5px;border-color:#2c4470;background:#0d1b36}.dfstep.small svg{width:14px;height:14px}
 .dfarrow{color:#3b5585;font-size:16px;flex:none}
 .dfhint{margin:0 0 14px !important;font-size:12.5px !important;color:var(--mute) !important}
-@media (max-width:980px){.devflow{flex-direction:column;align-items:stretch}.dfarrow{transform:rotate(90deg);align-self:center}.dfstep{flex-direction:row;justify-content:flex-start;padding:8px 12px;text-align:left}.dfbranch{grid-template-columns:1fr 1fr}.dfstep.small{justify-content:flex-start}}
+@media (max-width:1099px){.devflow{flex-direction:column;align-items:stretch}.dfarrow{transform:rotate(90deg);align-self:center}.dfstep{flex-direction:row;justify-content:flex-start;padding:8px 12px;text-align:left}.dfbranch{grid-template-columns:1fr 1fr}.dfstep.small{justify-content:flex-start}}
 .dfbranch{flex:0 0 104px}.dfstep.small svg{display:none}.dfstep.small{white-space:nowrap;padding:6px 6px}
-@media (max-width:980px){.dfbranch{flex:none}.dfstep.small{white-space:normal}}
+@media (max-width:1099px){.dfbranch{flex:none}.dfstep.small{white-space:normal}}
+/* Model development: chart spans the panel under the icon; roomier boxes */
+.steppanel.haswide{flex-wrap:wrap;align-items:center;row-gap:16px}.steppanel.haswide .stepbody h3{margin:0}
+.stepwide{flex:0 0 100%;min-width:0}.stepwide .devflow{margin:0}
+@media (min-width:1100px){.devflow{align-items:stretch;gap:6px;padding:16px 12px}.dfarrow{align-self:center}
+  .dfstep:not(.small){justify-content:center;min-height:104px;padding:12px 8px;font-size:13px;gap:8px}.dfstep:not(.small) svg{width:24px;height:24px}
+  .dfbranch{flex:0 0 120px;align-content:center}.dfstep.small{font-size:12.5px;padding:7px 8px}}
+.dfstep{overflow-wrap:break-word}
+@media (max-width:1099px){.devflow{gap:2px;padding:10px}.dfarrow{line-height:1;font-size:13px;margin:-1px 0}.dfstep:not(.small){padding:7px 12px}.dfbranch{gap:4px;margin:2px 0}}
+@media (max-width:1099px){.dfarrow{display:block;width:14px;height:14px;line-height:14px;text-align:center;margin:1px 0;transform:rotate(90deg);color:#4e6283}}

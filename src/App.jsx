@@ -282,10 +282,11 @@ function IconTabs({ id, label, items, numbered, collapsible }) {
       <button key={t} role="tab" id={`${id}-tab${i}`} aria-selected={i === on} aria-controls={`${id}-panel`} className={i === on ? 'on' : ''} onClick={() => pick(i)}>
         <Icon n={ic} /><span>{numbered && <em>{i + 1}</em>}{t}</span>{collapsible && <small className="tabstate">{i === on ? 'Close' : 'Open'}</small>}</button>))}</div>
     {on < 0 ? <p className="tabhint">Click a tab above to open it.</p> : (() => {
-      const [icon, title, body] = items[on];
-      return <div className="steppanel" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab${on}`}>
+      const [icon, title, body, wide] = items[on];
+      return <div className={`steppanel ${wide ? 'haswide' : ''}`} id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-tab${on}`}>
         <div className="stepicon"><Icon n={icon} /></div>
-        <div className="stepbody"><h3>{numbered ? `${on + 1}. ` : ''}{title}</h3>{body}</div>
+        <div className="stepbody"><h3>{numbered ? `${on + 1}. ` : ''}{title}</h3>{!wide && body}</div>
+        {wide && <><div className="stepwide">{wide}</div><div className="stepwide">{body}</div></>}
       </div>;
     })()}
   </>);
@@ -488,9 +489,8 @@ function About() {
       <p>To develop and optimise a CNN that automatically classifies knee osteoarthritis severity from X-ray images according to the Kellgren–Lawrence system, and to present it as a clinician-facing second opinion.</p>
       <p>Six specifications were set in advance, covering data integrity, three-group accuracy, choice of architecture, five-grade accuracy, explainability and a working clinical prototype (see the Results tab).</p></>],
     ['gear', 'Model development', <>
-      <DevFlow />
       <p>Models were built in MATLAB with the Deep Learning Toolbox using transfer learning from pretrained networks. Radiographs were contrast-enhanced with CLAHE, kept at 224 × 224 pixels and copied into three channels; training images were augmented with random rotations (±10°) and shifts (±5 pixels).</p>
-      <p>Four architectures were compared under an identical protocol: ResNet-18, ResNet-50, ResNet-101 and EfficientNet-B0, each trained with three random seeds and combined into an ensemble. Class imbalance was addressed with class-weighted loss, grouping the five grades into three severity groups and balanced sampling. Candidate pipelines were chosen on validation data only; the final pipeline was then tested once. The trained networks were exported to ONNX so that the same pipeline runs in the browser.</p></>],
+      <p>Four architectures were compared under an identical protocol: ResNet-18, ResNet-50, ResNet-101 and EfficientNet-B0, each trained with three random seeds and combined into an ensemble. Class imbalance was addressed with class-weighted loss, grouping the five grades into three severity groups and balanced sampling. Candidate pipelines were chosen on validation data only; the final pipeline was then tested once. The trained networks were exported to ONNX so that the same pipeline runs in the browser.</p></>, <DevFlow />],
     ['database', 'Dataset', <>
       <p>The Knee Osteoarthritis Severity Grading Dataset (Chen, 2018) contains 8,260 knee radiographs from the Osteoarthritis Initiative, cropped to the knee at 224 × 224 pixels and labelled KL 0–4. The official kneeKL224 split was used: 5,778 training, 826 validation and 1,656 test images, with no patient in more than one subset.</p>
       <p>The grades are strongly imbalanced (3,253 KL 0 images against 251 KL 4). The main output therefore groups them into three severity categories, KL 0–1, KL 2 and KL 3–4, while a second model estimates the full five-grade KL score.</p></>],
