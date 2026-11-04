@@ -6,7 +6,11 @@ src = pathlib.Path(sys.argv[1]); out = pathlib.Path('public/figs')
 block = pathlib.Path('src/App.jsx').read_text(encoding='utf-8').split('const FIGS = [')[1].split('\n];')[0]
 names = re.findall(r"\['[^']+', '([^']+)', '", block)
 have = {p.stem: p for p in src.glob('*.png')}
+# Made elsewhere, never overwrite: Train_* (train_curves.py) and the browser-pipeline Grad-CAM figures (gcfigs.py).
+# Web_DarkTheme's Supp_X01/X02 are different MATLAB montages that do not match the site captions.
+OWN = {'Supp_X01_GradCAM_overlays', 'Supp_X02_GradCAM_mean_by_grade'}
 for n in names:
+    if n in OWN: print('kept (gcfigs.py):', n); continue
     if n not in have: print('FIGS entry with no source image:', n); continue
     im = Image.open(have[n]).convert('RGBA')
     bg = Image.new('RGBA', im.size, (13, 27, 54, 255)); bg.alpha_composite(im); im = bg.convert('RGB')

@@ -525,6 +525,91 @@ const FIGS = [
 ];
 const CATS = ['All', 'Errors', '5-grade', 'Comparison', 'Reliability', 'Explainability', 'Training', 'Data'];
 
+// Plain-language notes shown in the lightbox: [how to read it, what it tells us]. Numbers only from the figures themselves.
+const EXPLAIN = {
+  Fig01_dataset_class_distribution: [
+    'Left: how many knee X-rays there are for each Kellgren–Lawrence (KL) grade, from KL0 (healthy) to KL4 (severe), split into the training set (used to teach the model), the validation set (used to choose settings) and the test set (used once, for the final score). Right: how much weight each severity group was given during training.',
+    'The data are very unbalanced: there are 13 healthy (KL0) knees for every severe (KL4) knee. A model trained on this naturally favours the common grades, so the rarer groups were given more weight, with an extra boost for KL2, the hardest group to recognise.'],
+  Fig02_threegroup_model_comparison_CI: [
+    'Each row is one network design, trained and tested the same way on the same 1,656 test knees. The filled dot is accuracy (the percentage of knees put in the right severity group); its bar is the 95% confidence interval, the range the true value most likely lies in. The hollow circle is balanced accuracy (every group counts equally, however common), the diamond is macro F1 (a combined score of hits and false alarms), and QWK on the right is agreement with the reference grades that gives partial credit for near misses. The dashed line is the project target of 75%.',
+    'Bigger networks (ResNet-50 and ResNet-101) and EfficientNet-B0 did not beat the small ResNet-18. The final pipeline reached 74.94%, one knee short of the 75% target. The confidence bars overlap a lot, so most of the differences between the ResNets are within noise.'],
+  Fig03_CM_ResNet18_50_101: [
+    'A confusion matrix compares the truth with the model’s answer. Rows are the true severity group, columns are what the model predicted, and each square shows the number of knees and the percentage of that row. The diagonal (top-left to bottom-right) holds the correct answers; every other square is a mistake.',
+    'All three network depths make the same main mistake (outlined in orange): 40–46% of knees with minimal OA (KL2) are called healthy or doubtful (KL0–1). Making the network deeper does not fix it, which suggests the difficulty lies in how subtle KL2 changes are on an X-ray, not in the size of the network.'],
+  Fig04_CM_final_3group: [
+    'Confusion matrix of the final pipeline, the one running in the app. Rows are the true severity group, columns are the prediction, and each square shows the count and the percentage of that row. The diagonal is correct.',
+    'Healthy or doubtful knees (KL0–1) are recognised 88% of the time and moderate to severe knees (KL3–4) 76% of the time, but minimal OA (KL2) only 47%: 193 KL2 knees (outlined) were called KL0–1. That single error is the main reason the overall score is 74.94% rather than higher.'],
+  Fig05_perclass_final_3group: [
+    'Four scores for each severity group. Recall: of the knees truly in this group, how many the model found. Precision: of the knees the model put in this group, how many really belong there. F1: a balance of recall and precision. Specificity: of the knees not in this group, how many the model correctly kept out. n is the number of test knees in the group.',
+    'KL2 is the bottleneck: the model finds only 47.4% of KL2 knees, against 87.7% for KL0–1 and 76.3% for KL3–4. Specificity is lowest for KL0–1 (69.9%) because uncertain knees tend to be pushed into the healthy group.'],
+  Fig06_EfficientNetB0_fair_test: [
+    'Left: the same five scores for ResNet-18 (teal) and EfficientNet-B0 (orange), both trained and tested with exactly the same recipe. Right: EfficientNet-B0’s confusion matrix (rows = true group, columns = prediction, diagonal = correct).',
+    'EfficientNet-B0 is 3.8 points less accurate overall, and the p-value of 0.001 means a gap that large is very unlikely to be chance. It does find more KL2 knees (55.9% vs 46.8%), but at a cost: 94 moderate to severe knees (outlined) were downgraded to KL2.'],
+  Fig07_paired_comparisons_forest: [
+    'Each row compares two models on exactly the same test knees. The dot is the difference in accuracy (percentage points) and the bar is its 95% confidence interval. If the bar crosses the vertical zero line, the two models are not reliably different. Orange rows are the comparisons where the difference is real; p is the probability of seeing a gap this large by chance.',
+    'Most design choices made no reliable difference, including deeper ResNets and adding the mirror image at test time (+0.91 points, p = 0.17). Only three comparisons are clear: EfficientNet-B0 is worse than ResNet-18, the cross-entropy five-grade model (M4) beats the five-grade reference, and the CORAL ordinal model (M4C) is worse than the final ordinal model (M4B).'],
+  Train_R18: [
+    'How training progressed over time (iterations, left to right) for three copies of ResNet-18 started from different random seeds. Left: accuracy; right: loss, the error the network is trying to reduce (lower is better). Thin lines are the training images, bold lines the validation images the network never learns from. Dots mark the point where each copy was saved.',
+    'Training accuracy keeps rising while validation levels off at about 70%. Past that point the network starts memorising its training images instead of learning patterns that carry over to new knees (overfitting). Each copy was saved at its lowest validation loss, before that happens, and the three saved copies together form Model 1, the final model.'],
+  Train_R50: [
+    'Same layout as the ResNet-18 curves: three random seeds, accuracy on the left, loss on the right; thin lines are training, bold lines validation, dots the saved networks.',
+    'ResNet-50 drives the training loss lower than ResNet-18, but its validation accuracy ends in the same place, at about 70%. The bigger network memorises more without doing better on knees it has not seen.'],
+  Train_R101: [
+    'Same layout: three random seeds, accuracy left, loss right; thin lines are training, bold lines validation, dots the saved networks.',
+    'ResNet-101, the deepest network tested, shows the widest gap between its training curves (noisy, often far above or below) and its flat validation curves. The extra depth adds memorisation, not accuracy on new knees.'],
+  Train_EffB0: [
+    'Same layout: three random seeds, accuracy left, loss right; thin lines are training, bold lines validation, dots the saved networks.',
+    'EfficientNet-B0 trains for much longer (its best points come after roughly 2,000 to 3,600 iterations) and its training and validation curves stay closer together. The curves look healthy, yet its test accuracy was still lower than ResNet-18 (see the EfficientNet-B0 comparison figure).'],
+  Fig09_efficiency_size_speed_overfitting: [
+    'A: test accuracy against network size, in millions of parameters. B: the time one network needs to analyse one image on an ordinary computer processor. C: how much better each network scores on its training images than on validation images, a simple measure of overfitting.',
+    'The smallest network, ResNet-18, is as accurate as ResNet-101 while being about four times smaller, almost four times faster (8.4 vs 31.6 ms) and overfitting half as much. That is why it was chosen, and why the whole pipeline is light enough to run in your browser.'],
+  Fig10_task_framing_5grade_vs_3group: [
+    'Teal bars are models that predict all five KL grades; blue bars are models that predict the three severity groups. The darker bar of each pair is accuracy, the lighter one balanced accuracy (every grade counts equally).',
+    'Five-grade models get 55–59% exactly right, three-group models about 75%. Even the five-grade Model 4B reaches 75.1% once its answers are merged into three groups. The jump comes from the easier question, mainly because the subtle KL0/KL1 boundary disappears, not from a better network.'],
+  Fig11_CM_M4B_5grade: [
+    'Five-grade confusion matrix of Model 4B, the model behind the KL grade shown in the app. Rows are the true KL grade, columns the prediction. The diagonal is exactly right; squares next to the diagonal are one grade off.',
+    'Model 4B gets 58.88% of knees exactly right and 86.7% within one grade. Its weakest spot is KL1, which means only doubtful changes: 191 of 296 KL1 knees (65%, outlined) are called KL0. Almost all other mistakes are one grade off.'],
+  Fig12_pergrade_recall_5grade: [
+    'Recall for each true KL grade: of the knees truly at that grade, the percentage the model got exactly right. Three five-grade models are shown; n is the number of test knees at each grade.',
+    'Every model recognises KL0 and KL4 well and struggles with KL1 (12–25%). The final ordinal model (teal) finds more KL1 and KL2 knees than the cross-entropy model at almost no cost elsewhere. The orange EfficientNet-B0 used one seed and a different recipe, so it is shown for context only.'],
+  Fig13_error_analysis_final_3group: [
+    'A: every mistake the final pipeline made on the test set, grouped by type (true group → predicted group); orange bars are mistakes two groups away. B: how many knees are truly in each group (grey) compared with how many the model put there (teal).',
+    '92.5% of the 415 mistakes are to a neighbouring group; the model rarely confuses healthy with moderate or severe (31 knees). It leans towards the healthy side: it predicts 102 more KL0–1 knees than there really are, mostly taken from KL2.'],
+  Fig14_calibration_ECE_reliability: [
+    'A: calibration error (ECE) for each model, i.e. how far the confidence it states is from how often it is actually right; lower is better. B: reliability curves. Knees are grouped by the model’s confidence, and each point shows how often the knees in that group were really correct. A perfectly honest model would sit on the dashed diagonal.',
+    'The final model is off by only 3.7% on average: when it says 80%, it is right roughly 80% of the time, so the confidence shown in the app can be read roughly at face value. The CORAL model (M4C, 9.8%) is the one poorly calibrated exception.'],
+  Fig15_review_flags: [
+    'Each row is one of the app’s automatic “review recommended” warnings; the percentage in brackets is how many test knees triggered it. The hollow circle is accuracy on knees that triggered the warning, the filled dot accuracy on knees that did not. The dashed line is the overall accuracy.',
+    'The warnings work: knees with any flag are right only 56.9% of the time, while unflagged knees are right 81.7% of the time. Flagging 27.2% of knees for a second look catches 46.7% of all mistakes, so a clinician knows which cases deserve extra attention.'],
+  Fig16_validation_candidate_selection: [
+    'Four candidate pipelines scored on the validation set (826 knees not used for training or for the final test). The filled dot is accuracy, the hollow circle balanced accuracy, and QWK on the right is agreement with the reference grades with partial credit for near misses.',
+    'The winner, B (Model 1 plus the mirror image at test time), was picked by a rule written down before testing and then run on the test set exactly once. This avoids tuning on the test data, a common trap that makes results look better than they are. Adding ResNet-101 (C and D) did not help.'],
+  Fig17_seed_variability: [
+    'Grey dots: test balanced accuracy of single networks trained from three different random starting points (seeds 42, 7 and 123). Green diamond: the three combined into an ensemble. Dashed line: the ResNet-18 ensemble used in the final model. SD is the spread between the single networks.',
+    'The same network trained three times can differ by up to 7 points, as one ResNet-101 run shows. Averaging the three removes such an outlier and gives a steadier result, which is why the final model is a three-seed ensemble. Single-seed ResNet-18 results were not saved, so it appears only as the line.'],
+  Fig18_CM_EfficientNetB0_exploratory_5grade: [
+    'Five-grade confusion matrix of an early, exploratory EfficientNet-B0. Rows are the true KL grade, columns the prediction; the diagonal is correct.',
+    'It scored 60.63% exactly right, but it was a single network trained with a simpler recipe (no contrast enhancement, no augmentation, no class weighting) and kept at its last training step, so it cannot be compared fairly with the final ensembles. It is kept as a reference point from early in the project.'],
+  Fig19_binary_vs_literature: [
+    'Accuracy on the simpler yes/no question “is there definite osteoarthritis?” (KL0–1 versus KL2–4) for each model. The dashed line is the published ResNet result of Mohammed et al. (2023) on the same question.',
+    'On this matched task every model lands between 78.5% and 80%, in line with the published 79.7%; the final pipeline scores 79.95%. So the project matches the literature, and its lower three-group score reflects a harder question, not a weaker model.'],
+  Fig20_GradCAM_audit: [
+    'Grad-CAM is a heat map of the parts of the X-ray that most influenced the model. A: the share of that heat falling inside the joint space (where osteoarthritis shows) and on the image border, compared with what random placement (“chance”) would give. B: how much the model’s confidence drops when the 10 hottest, 10 random or 10 coolest regions of the heat map are hidden.',
+    'The models focus on the joint 1.6 times more than chance and look at the image border less than chance. Hiding the hottest regions lowers confidence more than hiding random ones (0.41 vs 0.29), and hiding the coolest regions does nothing, so the heat maps really point at what the model uses.'],
+  Fig21_M4B_recall_precision_by_grade: [
+    'For each true KL grade, the bar is recall (the percentage of knees at that grade the model found) and the white tick is precision (of the knees the model called that grade, the percentage that were right). n is the number of test knees at each grade.',
+    'KL0, KL3 and KL4 are found most of the time, but only 18.6% of KL1 knees are found, and when the model does answer KL1 it is right only 29.3% of the time. A five-grade answer of KL1 should therefore be read as uncertain.'],
+  Fig22_final_3group_by_original_KL: [
+    'Each bar is one original KL grade, split by the severity group the final model put those knees in: teal = KL0–1, orange = KL2, purple = KL3–4.',
+    'KL0 and KL4 knees almost always land in the right group (92% and 100%). The mistakes come from the borderline grades: 20% of KL1 knees move up to KL2, 43% of KL2 knees move down to KL0–1, and 29% of KL3 knees move down. Obvious cases are handled well; in-between cases cause the errors.'],
+  Supp_X01_GradCAM_overlays: [
+    'One test knee per KL grade (columns), the same five sample knees as in the app. Top row: the original X-ray. Middle: after contrast enhancement (CLAHE), which is what the model actually sees. Bottom: the Grad-CAM heat map laid over it (red = most influence on the decision, blue = least), with the model’s prediction and confidence underneath.',
+    'The model mostly looks at the joint space between the thigh and shin bones, where osteoarthritis changes appear. For the moderate and severe knees the heat concentrates on one side of the joint. These maps were made by the same code that runs in your browser.'],
+  Supp_X02_GradCAM_mean_by_grade: [
+    'The average Grad-CAM heat map over all 1,656 test knees, shown separately for each true KL grade and drawn over a reference knee. Red = where the model looked most on average; n is the number of knees averaged.',
+    'For every grade the attention sits across the joint space, not on bone far from the joint or on the image edges. This supports that the model reads the joint itself rather than shortcuts such as text markers or the image border.'],
+};
+
 function Gallery() {
   const [cat, setCat] = useState('All');
   const [open, setOpen] = useState(-1);
@@ -542,18 +627,22 @@ function Gallery() {
   return (
     <section id="figures" className="wrap sec">
       <div className="sec-head"><p className="eyebrow">Figures</p><h2>The full evaluation, figure by figure</h2>
-        <p>All figures from the project report, generated from the saved test predictions. Click any figure to enlarge; use the arrow keys to browse.</p></div>
+        <p>All figures from the project report, generated from the saved test predictions. Click any figure to enlarge it with a plain-language explanation of how to read it and what it shows; use the arrow keys to browse.</p></div>
       <div className="chips">{CATS.map(c => <button key={c} className={c === cat ? 'on' : ''} onClick={() => setCat(c)}>{c}{c !== 'All' && <small>{FIGS.filter(f => f[0] === c).length}</small>}</button>)}</div>
       <div className="gallery">{shown.map(([c, f, cap, i]) => (
         <button key={f} className="fig" onClick={() => setOpen(i)}>
           <span className={`paper `}><img src={`/figs/${f}.webp`} alt={cap} loading="lazy" /></span>
-          <span className="figcap"><em>{c}</em>{cap}</span>
+          <span className="figcap"><em>{c}</em>{cap}<small className="figmore">Explain this figure →</small></span>
         </button>))}</div>
       {open >= 0 && (
         <div className="lightbox" onClick={() => setOpen(-1)}>
           <figure onClick={e => e.stopPropagation()}>
             <img src={`/figs/${FIGS[open][1]}.webp`} alt={FIGS[open][2]} />
             <figcaption><em>{FIGS[open][0]}</em>{FIGS[open][2]}</figcaption>
+            {EXPLAIN[FIGS[open][1]] && <div className="lbtext">
+              <div><h4>How to read it</h4><p>{EXPLAIN[FIGS[open][1]][0]}</p></div>
+              <div><h4>What it tells us</h4><p>{EXPLAIN[FIGS[open][1]][1]}</p></div>
+            </div>}
           </figure>
           <button className="lbclose" aria-label="Close">×</button>
         </div>)}
