@@ -176,3 +176,23 @@ h2{font-size:clamp(28px,3.4vw,40px);line-height:1.15}h3{font-size:14px;font-weig
 .footname{font-size:16px;color:#fff}.footgrid small{display:block;margin-top:6px;font-size:12.5px;line-height:1.5;color:#93a3bd}.footgrid a{color:var(--teal2)}.footdisc{margin:18px 0 0;font-size:13px;color:#c4d0e4}.footdisc b{color:#f2a93b}
 @media (max-width:980px){.limitlist{grid-template-columns:1fr 1fr}.footgrid{grid-template-columns:1fr 1fr}}
 @media (max-width:760px){.limitlist,.footgrid{grid-template-columns:1fr}}
+/* How it works: hover/tap explanations */
+.ovcol{overflow:visible}.ovcol h4{border-radius:15px 15px 0 0}
+.tip{position:relative;cursor:help;outline:none;border-radius:10px;transition:box-shadow .15s}
+.tip:hover,.tip:focus-visible{box-shadow:0 0 0 1.5px rgba(20,184,166,.6);z-index:31}
+.tip::after{content:attr(data-tip);box-sizing:border-box;position:absolute;left:50%;bottom:calc(100% + 8px);transform:translate(calc(-50% + var(--tx,0px)),4px);width:max-content;max-width:min(290px,84vw);background:#06101f;border:1px solid var(--teal2);color:var(--ink);font:400 13px/1.5 var(--sans);letter-spacing:0;text-transform:none;text-align:left;padding:10px 12px;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.55);display:none;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:32}
+.tip:hover::after,.tip:focus::after{display:block;opacity:1;transform:translate(calc(-50% + var(--tx,0px)),0)}
+body{overflow-x:clip}
+.ovhead .tip{flex:1;display:flex}.ovhead .tip span{flex:1}.ovmet .tip span,.ovpills .tip span{display:block}
+/* How it works: six steps as icon tabs */
+.steptabs{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.steptabs button{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 6px;color:var(--ink2);font:500 14px var(--sans);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.steptabs button:hover{border-color:#2c6b78;color:var(--ink)}.steptabs button svg{color:var(--teal2)}
+.steptabs button span{display:flex;gap:6px;align-items:baseline;text-align:center}.steptabs em{font:500 12px var(--mono);font-style:normal;color:var(--teal2)}
+.steptabs button.on{border-color:var(--teal2);background:rgba(20,184,166,.12);color:#fff}
+.steppanel{display:flex;gap:18px;align-items:flex-start;margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;min-height:150px}
+.stepicon{flex:none;width:54px;height:54px;border-radius:14px;display:grid;place-items:center;background:rgba(20,184,166,.12);color:var(--teal2)}.stepicon svg{width:28px;height:28px}
+.steppanel h3{margin:0 0 6px}.steppanel p{margin:0 0 10px;color:var(--ink);font-size:15.5px}.steppanel .tech{margin:0;color:var(--mute);font-size:13.5px}.steppanel .tech b{color:var(--ink2);font-weight:600}
+.aboutnext{margin-bottom:18px}
+@media (max-width:980px){.steptabs{grid-template-columns:repeat(3,1fr)}}
+@media (max-width:760px){.steppanel{flex-direction:column;padding:18px}.steptabs button{font-size:13px}}

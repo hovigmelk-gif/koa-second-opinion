@@ -240,20 +240,38 @@ function Bars({ title, labels, vals, hi, alt }) {
   );
 }
 
+const ICONS = {
+  contrast: <><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" /></>,
+  resize: <><rect x="4" y="4" width="16" height="16" rx="2.5" /><path d="M9 15l6-6M11 9h4v4" /></>,
+  layers: <><path d="M12 3.5l8.5 4.5-8.5 4.5L3.5 8z" /><path d="M3.5 12l8.5 4.5 8.5-4.5" /><path d="M3.5 16l8.5 4.5 8.5-4.5" /></>,
+  scale: <><path d="M12 4v16M6 20h12M5 8h14" /><path d="M5 8l-2.5 6a2.8 2.8 0 0 0 5 0zM19 8l-2.5 6a2.8 2.8 0 0 0 5 0z" /></>,
+  bars: <path d="M5 20v-6M10 20V9M15 20v-8M20 20V4M3 20h18" />,
+  flag: <path d="M6 21V4h11l-2.5 4L17 12H6" />,
+};
+const Icon = ({ n }) => <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ICONS[n]}</svg>;
 function Pipeline() {
   const steps = [
-    ['Contrast', 'CLAHE (clip limit 0.02, 8 × 8 tiles) evens out exposure across the joint, exactly as at training time.'],
-    ['Standardise', 'Resize to 224 × 224 and copy the grey image into three channels for ResNet-18.'],
-    ['Ensemble + TTA', 'Three independently trained seeds (42, 7, 123) each read the image and its mirror; the six softmax outputs are averaged.'],
-    ['Decide', 'Subtract 0.10 from the KL 0–1 probability, then take the highest group, a rule fixed on validation data to rescue under-called KL 2 knees.'],
-    ['Grade', 'A second ResNet-18 trained with an ordinal loss estimates KL 0–4, penalising far-off grades more than near misses.'],
-    ['Explain + flag', 'Grad-CAM shows where Model 1 looked; pre-declared rules flag low confidence (< 60%), model disagreement and poor image quality.'],
+    ['contrast', 'Contrast', 'Every X-ray is exposed a little differently. This step evens out the brightness and sharpens local contrast, so bone edges and the joint space look consistent from image to image.', 'CLAHE (clip limit 0.02, 8 × 8 tiles) evens out exposure across the joint, exactly as at training time.'],
+    ['resize', 'Standardise', 'The image is resized to the size the network expects, and the grey picture is copied into three colour channels, because the network was originally built for colour photos.', 'Resize to 224 × 224 and copy the grey image into three channels for ResNet-18.'],
+    ['layers', 'Ensemble + TTA', 'Instead of trusting a single network, three separately trained copies each look at the X-ray and at its mirror image. Averaging their six answers gives a steadier, more reliable result.', 'Three independently trained seeds (42, 7, 123) each read the image and its mirror; the six softmax outputs are averaged.'],
+    ['scale', 'Decide', 'The model tends to call borderline knees healthy. A small fixed adjustment against the KL0–1 group, chosen on validation data before any testing, helps it catch more minimal-OA (KL2) knees.', 'Subtract 0.10 from the KL 0–1 probability, then take the highest group, a rule fixed on validation data to rescue under-called KL 2 knees.'],
+    ['bars', 'Grade', 'A second network estimates the exact KL grade from 0 to 4. It was trained so that being one grade off costs less than being several grades off, which keeps its mistakes close to the truth.', 'A second ResNet-18 trained with an ordinal loss estimates KL 0–4, penalising far-off grades more than near misses.'],
+    ['flag', 'Explain + flag', 'A heat map shows which parts of the X-ray drove the decision, and automatic checks warn you when the AI is unsure, when the two models disagree or when the image quality is poor.', 'Grad-CAM shows where Model 1 looked; pre-declared rules flag low confidence (< 60%), model disagreement and poor image quality.'],
   ];
+  const [on, setOn] = useState(0);
+  const [icon, title, plain, tech] = steps[on];
   return (
     <section id="how" className="wrap sec">
-      <div className="sec-head"><p className="eyebrow">How it works</p><h2>From radiograph to second opinion in six steps</h2></div>
+      <div className="sec-head"><p className="eyebrow">How it works</p><h2>From radiograph to second opinion in six steps</h2>
+        <p>Hover over (or tap) any part of the diagram for a plain-language explanation, then click through the six steps below.</p></div>
       <Overview />
-      <ol className="steps">{steps.map(([t, d], i) => <li key={t}><b><em>{i + 1}</em>{t}</b><p>{d}</p></li>)}</ol>
+      <div className="steptabs" role="tablist" aria-label="Pipeline steps">{steps.map(([ic, t], i) => (
+        <button key={t} role="tab" id={`steptab${i}`} aria-selected={i === on} aria-controls="steppanel" className={i === on ? 'on' : ''} onClick={() => setOn(i)}>
+          <Icon n={ic} /><span><em>{i + 1}</em>{t}</span></button>))}</div>
+      <div className="steppanel" id="steppanel" role="tabpanel" aria-labelledby={`steptab${on}`}>
+        <div className="stepicon"><Icon n={icon} /></div>
+        <div><h3>{on + 1}. {title}</h3><p>{plain}</p><p className="tech"><b>Technical detail:</b> {tech}</p></div>
+      </div>
       <p className="note">Trained with two-stage transfer learning (head, then all layers), class weights of 1/√n and light augmentation (±10° rotation, ±5 px shift), on the official kneeKL224 split: 5,778 training, 826 validation and 1,656 test knees with no patient overlap. Every model choice was made on validation data; the test set was used once per model.</p>
     </section>
   );
@@ -361,7 +379,7 @@ function About() {
   return (
     <section id="about" className="wrap sec about">
       <div className="sec-head"><p className="eyebrow">About the project</p><h2>Why this project exists, and how it was built</h2>
-        <p>This website presents the outcome of <i>{REPORT_TITLE}</i>, a group project in Advanced Biomedical Engineering Studio B at the University of Technology Sydney.</p></div>
+        <p>This website presents the outcome of the project <i>{REPORT_TITLE}</i>.</p></div>
       <div className="grid2 aboutgrid">
         <div className="card"><h3>Project background</h3>
           <p>Knee osteoarthritis (KOA) is the progressive degeneration of the knee joint, with loss of articular cartilage and structural changes that cause pain, stiffness, swelling and reduced mobility. Osteoarthritis affected an estimated 595 million people worldwide in 2020 (7.6% of the global population), with the knee the most affected joint, and around 2.1 million Australians in 2022.</p>
@@ -390,18 +408,13 @@ function About() {
       <h3 className="abouth">Model limitations</h3>
       <ul className="limitlist">{limits.map(([t, d]) => <li key={t}><b>{t}</b>{d}</li>)}</ul>
 
-      <div className="grid2 aboutgrid">
-        <div className="card"><h3>Next steps</h3>
-          <ol className="nextsteps">
-            <li>A blinded clinician re-read of the 137 suspect test labels, to separate label error from model error at the KL 1/KL 2 boundary.</li>
-            <li>External validation on an independent cohort, such as the Multicenter Osteoarthritis Study.</li>
-            <li>Technical changes for the minority grades, including higher-resolution joint-centred crops and medical-domain pretraining.</li>
-            <li>A clinician reader study of the prototype measuring agreement, grading time and automation bias.</li>
-          </ol></div>
-        <div className="card"><h3>Academic context</h3>
-          <p>Developed by Group 16 (Amy Stokes, Hovig Melkonyants, Abbey Lown and Habiba Abdelalim) in Advanced Biomedical Engineering Studio B, Spring 2026, at the University of Technology Sydney.</p>
-          <p>Hovig Melkonyants undertook the model development and optimisation for the project and built this website, which runs the final models in the browser.</p></div>
-      </div>
+      <div className="card aboutnext"><h3>Next steps</h3>
+        <ol className="nextsteps">
+          <li>A blinded clinician re-read of the 137 suspect test labels, to separate label error from model error at the KL 1/KL 2 boundary.</li>
+          <li>External validation on an independent cohort, such as the Multicenter Osteoarthritis Study.</li>
+          <li>Technical changes for the minority grades, including higher-resolution joint-centred crops and medical-domain pretraining.</li>
+          <li>A clinician reader study of the prototype measuring agreement, grading time and automation bias.</li>
+        </ol></div>
 
       <Disclaimer />
     </section>
@@ -721,44 +734,68 @@ function Gallery() {
   );
 }
 
+// Hover (or tap) explanation for one part of the How it works diagram
+// Shifts the bubble sideways so it stays inside the viewport (bubble is up to 290 px or 84% of the screen wide)
+const placeTip = e => {
+  const r = e.currentTarget.getBoundingClientRect(), w = Math.min(290, innerWidth * 0.84), c = r.left + r.width / 2;
+  const left = Math.min(Math.max(c - w / 2, 8), innerWidth - w - 8);
+  e.currentTarget.style.setProperty('--tx', `${Math.round(left - (c - w / 2))}px`);
+};
+const Tip = ({ t, className = '', children }) =>
+  <div className={`tip ${className}`} tabIndex={0} data-tip={t} onMouseEnter={placeTip} onFocus={placeTip}>{children}</div>;
 function Overview() {
   return (
     <div className="ov">
-      <div className="ovcol c1"><h4><em>1</em>Data</h4>
-        <div className="ovdata"><img src="/samples/KL4_9012867R.png" alt="" /><div><b>OAI kneeKL224</b><span>8,260 X-rays<br />224 × 224 px<br />5 KL grades</span></div></div>
-        <small>Split &amp; preprocessing</small>
-        <div className="ovsplit"><i style={{ flex: 5778 }} /><i style={{ flex: 826 }} /><i style={{ flex: 1656 }} /></div>
-        <p className="ovnote">Train 5,778 · Val 826 · Test 1,656</p>
-        <div className="ovpills"><span>CLAHE contrast</span><span>Grey → 3 channels</span><span>Aug ±10°, ±5 px</span></div>
+      <div className="ovcol c1"><Tip t="Step 1 collects the X-rays and prepares them so every image looks consistent before the network sees it."><h4><em>1</em>Data</h4></Tip>
+        <Tip t="The dataset: 8,260 knee X-rays from the Osteoarthritis Initiative, each cropped to the knee at 224 × 224 pixels and graded from KL0 (healthy) to KL4 (severe)."><div className="ovdata"><img src="/samples/KL4_9012867R.png" alt="" /><div><b>OAI kneeKL224</b><span>8,260 X-rays<br />224 × 224 px<br />5 KL grades</span></div></div></Tip>
+        <Tip t="The images are split three ways: training (the network learns from these), validation (used to choose settings) and test (kept aside and used once, for the final score). No patient appears in more than one set."><small>Split &amp; preprocessing</small>
+          <div className="ovsplit"><i style={{ flex: 5778 }} /><i style={{ flex: 826 }} /><i style={{ flex: 1656 }} /></div>
+          <p className="ovnote">Train 5,778 · Val 826 · Test 1,656</p></Tip>
+        <div className="ovpills">
+          <Tip t="CLAHE (contrast-limited adaptive histogram equalisation) boosts contrast region by region, so bone edges and the joint space stand out evenly across the X-ray."><span>CLAHE contrast</span></Tip>
+          <Tip t="The network was originally trained on colour photos, so the grey X-ray is copied into the red, green and blue channels it expects."><span>Grey → 3 channels</span></Tip>
+          <Tip t="Augmentation: during training each image is randomly rotated by up to 10° and shifted by up to 5 pixels, so the network learns the anatomy rather than one exact position."><span>Aug ±10°, ±5 px</span></Tip>
+        </div>
       </div>
       <div className="ovarrow">→</div>
-      <div className="ovcol c2"><h4><em>2</em>Model</h4>
-        <div className="ovres"><b>ResNet-18</b> <span>ImageNet-pretrained</span>
+      <div className="ovcol c2"><Tip t="Step 2 is the neural network: it reads the image and outputs a probability for each grade."><h4><em>2</em>Model</h4></Tip>
+        <Tip t="ResNet-18 is an 18-layer convolutional neural network. It first learned from millions of everyday photos (ImageNet) and was then fine-tuned on knee X-rays, a technique called transfer learning. Its four stages go from simple patterns such as edges to complex shapes such as bone spurs; 'ch' is the number of pattern detectors in each stage. Skip connections let information jump past each block, which makes deep networks easier to train."><div className="ovres"><b>ResNet-18</b> <span>ImageNet-pretrained</span>
           <div className="blocks">{[['Res 1', 64], ['Res 2', 128], ['Res 3', 256], ['Res 4', 512]].map(([n, c]) => <div key={n}><b>{n}</b><span>{c} ch</span></div>)}</div>
-          <p>Skip connections bypass each block</p></div>
+          <p>Skip connections bypass each block</p></div></Tip>
         <small>Classifier head</small>
-        <div className="ovhead"><span>Avg pool</span><span>FC layer</span><span>Softmax</span></div>
+        <div className="ovhead">
+          <Tip t="Average pooling: each of the 512 pattern maps is averaged into one number, summarising the whole image."><span>Avg pool</span></Tip>
+          <Tip t="Fully connected layer: weighs those 512 numbers to produce a score for each grade."><span>FC layer</span></Tip>
+          <Tip t="Softmax: turns the scores into probabilities that add up to 100%."><span>Softmax</span></Tip>
+        </div>
         <p className="ovnote">Outputs 5 KL grades or 3 groups</p>
         <small>Also compared, same split and protocol</small>
-        <div className="ovpills ghost"><span>ResNet-50</span><span>ResNet-101</span><span>EfficientNet-B0</span></div>
+        <Tip t="Deeper networks (ResNet-50 and ResNet-101) and EfficientNet-B0 were trained exactly the same way for a fair comparison. None of them beat ResNet-18."><div className="ovpills ghost"><span>ResNet-50</span><span>ResNet-101</span><span>EfficientNet-B0</span></div></Tip>
       </div>
       <div className="ovarrow">→</div>
-      <div className="ovcol c3"><h4><em>3</em>Train &amp; evaluate</h4>
-        <div className="ovtrain"><b>Training</b><span>Adam optimiser · class-weighted loss · gradient clipping · early stopping · 3 random seeds</span></div>
+      <div className="ovcol c3"><Tip t="Step 3 teaches the network, then measures it on knees it has never seen."><h4><em>3</em>Train &amp; evaluate</h4></Tip>
+        <Tip t="Adam is the method that nudges the network's weights after every batch of images. Class-weighted loss makes mistakes on rare grades count more. Gradient clipping keeps each update small and stable. Early stopping ends training once validation results stop improving, before the network starts memorising. Three random seeds means three copies were trained and their answers averaged."><div className="ovtrain"><b>Training</b><span>Adam optimiser · class-weighted loss · gradient clipping · early stopping · 3 random seeds</span></div></Tip>
         <small>Held-out test · n = 1,656</small>
-        <div className="ovmet">{['Acc', 'Bal. acc', 'F1', 'Sens', 'Spec', 'QWK'].map(m => <span key={m}>{m}</span>)}</div>
-        <small>Imbalance fix · KL0 : KL4 = 13.2 : 1</small>
-        <div className="ovgrp"><span>KL0–1</span><span>KL2</span><span>KL3–4</span></div>
+        <div className="ovmet">{[
+          ['Acc', 'Accuracy: the share of knees given the correct answer.'],
+          ['Bal. acc', 'Balanced accuracy: accuracy averaged over the groups, so rare groups count as much as common ones.'],
+          ['F1', 'F1 score: a balance of precision (how often a prediction is right) and recall (how many true cases are found).'],
+          ['Sens', 'Sensitivity (recall): of the knees truly in a group, how many the model found.'],
+          ['Spec', 'Specificity: of the knees not in a group, how many the model correctly kept out.'],
+          ['QWK', 'Quadratic weighted kappa: agreement with the reference grades that gives partial credit for near misses and penalises far-off answers more.'],
+        ].map(([m, t]) => <Tip key={m} t={t}><span>{m}</span></Tip>)}</div>
+        <Tip t="There are 13 times more healthy (KL0) knees than severe (KL4) ones. To stop the network favouring the common grades, rare grades are weighted more, and the five grades are grouped into three: KL0–1, KL2 and KL3–4."><small>Imbalance fix · KL0 : KL4 = 13.2 : 1</small>
+          <div className="ovgrp"><span>KL0–1</span><span>KL2</span><span>KL3–4</span></div></Tip>
       </div>
       <div className="ovarrow">→</div>
-      <div className="ovcol c4"><h4><em>4</em>Output</h4>
-        <div className="ovcam" />
-        <small>KL grade output</small>
-        <div className="ovkl">{[0, 1, 2, 3, 4].map(k => <span key={k} className={k === 4 ? 'on' : ''}>KL{k}</span>)}</div>
-        <p className="ovnote warm">Example: KL4 · severe</p>
-        <div className="ovapp"><b>Web app</b><span>Clinician grades first, then AI grade + flags</span></div>
+      <div className="ovcol c4"><Tip t="Step 4 is what you see: a grade, a heat map and any warnings."><h4><em>4</em>Output</h4></Tip>
+        <Tip t="Grad-CAM heat map: red marks the parts of the X-ray that most influenced the decision, blue the least. It shows where the model looked, not where the disease is."><div className="ovcam" /></Tip>
+        <Tip t="The five-grade model gives a probability for each KL grade; the most likely one is shown as the AI grade."><small>KL grade output</small>
+          <div className="ovkl">{[0, 1, 2, 3, 4].map(k => <span key={k} className={k === 4 ? 'on' : ''}>KL{k}</span>)}</div>
+          <p className="ovnote warm">Example: KL4 · severe</p></Tip>
+        <Tip t="In the web app you record your own grade first (blind-first), so the AI cannot anchor your judgement. Then the AI grade and any review flags are revealed."><div className="ovapp"><b>Web app</b><span>Clinician grades first, then AI grade + flags</span></div></Tip>
       </div>
-      <div className="ovloop"><b>Feedback loop</b> Loss → Adam optimiser → weight update, every batch · KL1/KL2 errors → class weights or 3 groups → retrain, re-test</div>
+      <Tip className="ovloop" t="During training, the error (loss) on each batch of images is used to update the weights. When KL1 and KL2 errors stayed high, the class weights or the three-group setup were changed and the model was retrained and re-tested."><b>Feedback loop</b> Loss → Adam optimiser → weight update, every batch · KL1/KL2 errors → class weights or 3 groups → retrain, re-test</Tip>
     </div>
   );
 }
