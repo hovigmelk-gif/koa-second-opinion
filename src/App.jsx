@@ -268,6 +268,7 @@ const ICONS = {
   check: <><rect x="3.5" y="3.5" width="17" height="17" rx="3" /><path d="M8 12.5l3 3 5-6" /></>,
   alert: <><path d="M12 3.5L21.5 20h-19z" /><path d="M12 10v4.5M12 17.5v.1" /></>,
   arrow: <><path d="M4 12h15M13 6l6 6-6 6" /></>,
+  globe: <><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.5 2.6 3.7 5.4 3.7 8.5s-1.2 5.9-3.7 8.5c-2.5-2.6-3.7-5.4-3.7-8.5s1.2-5.9 3.7-8.5z" /></>,
   grid3: <><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17" /></>,
   grid5: <><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><path d="M3.5 6.9h17M3.5 10.3h17M3.5 13.7h17M3.5 17.1h17M6.9 3.5v17M10.3 3.5v17M13.7 3.5v17M17.1 3.5v17" /></>,
 };
@@ -432,6 +433,36 @@ function Disclaimer() {
     </div>
   );
 }
+// Figure 1 of the report, redrawn: how the final model was developed, with hover/tap notes
+function DevFlow() {
+  const Step = ({ ic, l, t, cls = '' }) => <Tip className={`dfstep below ${cls}`} t={t}><Icon n={ic} /><span>{l}</span></Tip>;
+  const Arrow = () => <span className="dfarrow" aria-hidden="true">→</span>;
+  return (<>
+    <div className="devflow">
+      <Step ic="database" l="Dataset acquisition" t="8,260 knee X-rays from the Osteoarthritis Initiative (Chen, 2018), graded KL 0–4 and split into 5,778 training, 826 validation and 1,656 test images, with no patient in more than one set." />
+      <Arrow />
+      <Step ic="contrast" l="Image preprocessing" t="CLAHE contrast enhancement, images kept at 224 × 224 pixels and the grey image copied into three channels. Training images were also randomly rotated (±10°) and shifted (±5 pixels)." />
+      <Arrow />
+      <Step ic="grid5" l="5-class classification" t="A first ResNet-18 was trained to predict all five KL grades, as a starting point (55.5% test accuracy)." />
+      <Arrow />
+      <div className="dfbranch">
+        <Step cls="small" ic="layers" l="ResNet-18" t="11.2 million parameters, 74.03% three-group test accuracy. The smallest and fastest network, and the one that was kept." />
+        <Step cls="small" ic="layers" l="ResNet-50" t="23.5 million parameters, 72.83%. Not significantly different from ResNet-18 (p = 0.21), about twice as slow, and it overfitted more." />
+        <Step cls="small" ic="layers" l="ResNet-101" t="42.6 million parameters, 74.15%. Not significantly better than ResNet-18 (p = 0.91) and about four times as slow." />
+        <Step cls="small" ic="layers" l="EfficientNet-B0" t="4.0 million parameters, 70.23%. Significantly worse than ResNet-18 under the same protocol (−3.80 points, p = 0.0015)." />
+      </div>
+      <Arrow />
+      <Step ic="bars" l="Performance evaluation" t="Each network was compared on accuracy, balanced accuracy, F1 score, recall, precision, specificity, QWK and confusion matrices, with three random seeds each. ResNet-18 gave the best balance of accuracy, size and speed." />
+      <Arrow />
+      <Step ic="scale" l="Class imbalance mitigation" t="There are 13 healthy knees for every severe one. Three fixes were tested: class-weighted loss, grouping the five grades into three severity groups (KL 0–1, KL 2, KL 3–4) and balanced sampling." />
+      <Arrow />
+      <Step ic="gear" l="Retrain model" t="The final models were retrained under a locked protocol: Model 1 for the three groups (three seeds, mirror-image averaging and a 0.10 decision margin) and Model 4B for the five grades (ordinal loss)." />
+      <Arrow />
+      <Step cls="last" ic="globe" l="Website deployment" t="The trained networks were exported to ONNX and the rest of the pipeline rebuilt in JavaScript, so the models run in your browser. The browser version was checked against MATLAB on all 1,656 test knees." />
+    </div>
+    <p className="dfhint">How the final model was developed (report Figure 1). Hover over or tap a step for details.</p>
+  </>);
+}
 function About() {
   const specs = [
     ['S1', 'Data integrity', 'No patient leakage or duplicates between subsets', 'No patient overlap; no duplicates detected', 'Met'],
@@ -457,6 +488,7 @@ function About() {
       <p>To develop and optimise a CNN that automatically classifies knee osteoarthritis severity from X-ray images according to the Kellgren–Lawrence system, and to present it as a clinician-facing second opinion.</p>
       <p>Six specifications were set in advance, covering data integrity, three-group accuracy, choice of architecture, five-grade accuracy, explainability and a working clinical prototype (see the Results tab).</p></>],
     ['gear', 'Model development', <>
+      <DevFlow />
       <p>Models were built in MATLAB with the Deep Learning Toolbox using transfer learning from pretrained networks. Radiographs were contrast-enhanced with CLAHE, kept at 224 × 224 pixels and copied into three channels; training images were augmented with random rotations (±10°) and shifts (±5 pixels).</p>
       <p>Four architectures were compared under an identical protocol: ResNet-18, ResNet-50, ResNet-101 and EfficientNet-B0, each trained with three random seeds and combined into an ensemble. Class imbalance was addressed with class-weighted loss, grouping the five grades into three severity groups and balanced sampling. Candidate pipelines were chosen on validation data only; the final pipeline was then tested once. The trained networks were exported to ONNX so that the same pipeline runs in the browser.</p></>],
     ['database', 'Dataset', <>
