@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadModels, decodeImage, analyse, renderLayers } from './engine.js';
 import { GROUPS, GROUP_SHORT, KL_NAMES } from './koa-core.js';
-import { base44 } from './base44Client.js';
+import { supabase } from './supabaseClient.js';
 import Workstation from './Workstation.jsx';
 
 // Set your LinkedIn profile URL here to show the "Connect on LinkedIn" button
@@ -393,14 +393,15 @@ function Reviews() {
   const [list, setList] = useState([]);
   const [f, setF] = useState({ name: '', role: '', rating: 0, comment: '' });
   const [st, setSt] = useState('');
-  useEffect(() => { base44.entities.Review.list('-created_date', 60).then(setList).catch(() => {}); }, []);
+  useEffect(() => { supabase.from('reviews').select('id,created_at,name,role,rating,comment').order('created_at', { ascending: false }).limit(60).then(({ data }) => data && setList(data)); }, []);
   const avg = list.length ? list.reduce((a, r) => a + (r.rating || 0), 0) / list.length : 0;
   async function submit(e) {
     e.preventDefault();
     if (!f.name.trim() || !f.comment.trim() || !f.rating) { setSt('Please add your name, a star rating and a comment.'); return; }
     setSt('sending');
     try {
-      const r = await base44.entities.Review.create({ name: f.name.trim().slice(0, 80), role: f.role.trim().slice(0, 100), rating: f.rating, comment: f.comment.trim().slice(0, 1000) });
+      const { data: r, error } = await supabase.from('reviews').insert({ name: f.name.trim().slice(0, 80), role: f.role.trim().slice(0, 100) || null, rating: f.rating, comment: f.comment.trim().slice(0, 1000) }).select().single();
+      if (error) throw error;
       setList(l => [r, ...l]); setF({ name: '', role: '', rating: 0, comment: '' }); setSt('Thank you, your review is posted.');
     } catch { setSt('Sorry, that did not send. Please try again.'); }
   }
@@ -441,7 +442,7 @@ function Connect() {
     e.preventDefault();
     if (!f.name.trim() || !/^\S+@\S+\.\S+$/.test(f.email) || !f.message.trim()) { setSt('Please add your name, a valid email and a message.'); return; }
     setSt('sending');
-    try { await base44.entities.ContactMessage.create({ name: f.name.trim().slice(0, 80), email: f.email.trim(), message: f.message.trim().slice(0, 2000) }); setF({ name: '', email: '', message: '' }); setSt('Thanks, your message has been sent. I\'ll get back to you.'); }
+    try { const { error } = await supabase.from('contact_messages').insert({ name: f.name.trim().slice(0, 80), email: f.email.trim(), message: f.message.trim().slice(0, 2000) }); if (error) throw error; setF({ name: '', email: '', message: '' }); setSt('Thanks, your message has been sent. I\'ll get back to you.'); }
     catch { setSt('Sorry, that did not send. Please try again.'); }
   }
   return (
