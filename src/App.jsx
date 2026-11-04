@@ -38,12 +38,12 @@ export default function App() {
       <Header />
       <main>
         <Hero load={load} />
+        <About />
         <Pipeline />
         <KLScale />
         <Results />
         <Verification />
         <Gallery />
-        <Limits />
         <CtaBand load={load} />
         <Reviews />
         <Connect />
@@ -59,7 +59,7 @@ function Header() {
       <div className="wrap top-in">
         <a href="#/" className="brand" onClick={e => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); }}><span className="dot" />KOA Second Opinion</a>
         <nav>
-          <a href="#how" onClick={go('how')}>How it works</a><a href="#results" onClick={go('results')}>Results</a>
+          <a href="#about" onClick={go('about')}>About</a><a href="#how" onClick={go('how')}>How it works</a><a href="#results" onClick={go('results')}>Results</a>
           <a href="#figures" onClick={go('figures')}>Figures</a><a href="#reviews" onClick={go('reviews')}>Reviews</a><a href="#connect" onClick={go('connect')}>Connect</a>
           <a className="navcta" href="#/app">Launch app →</a>
         </nav>
@@ -291,7 +291,7 @@ function Results() {
               <div key={n} className={n.startsWith('Model 1') ? 'hi' : ''}><span>{n}<small>{s}</small></span>
                 <div><i style={{ width: `${v}%` }} /></div><em>{v.toFixed(2)}%</em></div>))}
             </div>
-            <p className="mini">Single-pass test accuracy before flip TTA. ResNet-50 and ResNet-101 were not significantly better (McNemar p = 0.22 and 0.95) but were 2–4× slower and overfit more. EfficientNet-B0 was significantly worse (p = 0.001).</p>
+            <p className="mini">Single-pass test accuracy before flip TTA. ResNet-50 and ResNet-101 were not significantly better (clustered McNemar p = 0.21 and 0.91) but were 2–4× slower and overfit more. EfficientNet-B0 was significantly worse (−3.80 points, p = 0.0015).</p>
           </div>
         </div>
         <CM5 />
@@ -330,16 +330,80 @@ function Verification() {
   );
 }
 
-function Limits() {
+const REPORT_TITLE = 'Development of a Convolutional Neural Network (CNN) to Classify the Severity of Knee Osteoarthritis (KOA) from X-Rays';
+const DATASET_DOI = 'https://doi.org/10.17632/56rmx5bjcr.1';
+function Disclaimer() {
   return (
-    <section id="limits" className="wrap sec limits">
-      <div className="sec-head"><p className="eyebrow">Limits</p><h2>What this is, and what it is not</h2></div>
-      <ul>
-        <li><b>Not a medical device.</b> A research prototype for decision support; the reading clinician makes the diagnosis.</li>
-        <li><b>One dataset.</b> Trained and tested on Osteoarthritis Initiative radiographs (kneeKL224). Other scanners, crops or photos are outside what it has seen, and the input checks will say so.</li>
-        <li><b>KL 2 is often under-called.</b> Recall is 47% for minimal OA; about 8% of test labels near the KL 0–2 boundary are themselves doubtful.</li>
-        <li><b>KL 1 is the weakest grade</b> in the 5-grade model (19% recall), which is why the 3-group result is the main output.</li>
-      </ul>
+    <div className="disclaimer" role="note">
+      <b>Research Prototype · Not for Clinical Use</b>
+      <p>This application was developed for academic research and educational demonstration purposes. It uses a convolutional neural network (CNN) to classify knee osteoarthritis severity from X-ray images.</p>
+      <p>The model has not been clinically validated or approved as a medical device. Its predictions must not be used for medical diagnosis, treatment decisions or clinical assessment. All results are for demonstration purposes only and should not replace evaluation by a qualified healthcare professional.</p>
+    </div>
+  );
+}
+function About() {
+  const specs = [
+    ['S1', 'Data integrity', 'No patient leakage or duplicates between subsets', 'No patient overlap; no duplicates detected', 'Met'],
+    ['S2', 'Three groups', '≥ 75% accuracy', '74.94% (95% CI 72.71–77.12), one image short', 'Narrowly missed'],
+    ['S3', 'Architecture', 'Test whether ResNet-50/101 improve on ResNet-18', 'No gain from depth; EfficientNet-B0 −3.80 points', 'Answered'],
+    ['S4', 'Five grades', '≥ 60% exact, QWK ≥ 0.72, ≥ 85% within one grade', '58.88% exact, QWK 0.711, 86.7% within one', 'Partly met'],
+    ['S5', 'Grad-CAM', 'Attention on the joint above chance, and faithful', '1.6× chance in the joint band; hottest > random > coolest', 'Met'],
+    ['S6', 'Clinical tool', 'Clinician-first research prototype', 'Blind-first app; 27.2% of knees routed for review', 'Met (prototype)'],
+  ];
+  const limits = [
+    ['One dataset, single-reader labels', 'All models were trained and tested on the Osteoarthritis Initiative kneeKL224 split, where each image was graded by one reader. Performance on other populations, scanners and imaging protocols is unknown.'],
+    ['Early disease is under-called', 'KL 2 recall is 47.4%: 193 KL 2 knees were classified as KL 0–1. In the five-grade model, KL 1 is the weakest grade (18.6% recall).'],
+    ['Not clinically validated', 'The application was technically tested, but no clinician reader or usability study was performed, so effects on grading accuracy, time or automation bias are unknown.'],
+    ['Explanations are not diagnoses', 'Grad-CAM shows which regions influenced a prediction. It was not compared with expert annotations of osteophytes or joint-space narrowing, so it does not demonstrate clinically correct reasoning.'],
+    ['Slightly optimistic estimates', 'The same test set was used across several experiments, so some test results informed later decisions and reported performance may be slightly optimistic.'],
+    ['Images outside the training data', 'Other crops, views or photographs differ from the training data; the input checks flag such images, but cannot guarantee a reliable result.'],
+  ];
+  return (
+    <section id="about" className="wrap sec about">
+      <div className="sec-head"><p className="eyebrow">About the project</p><h2>Why this project exists, and how it was built</h2>
+        <p>This website presents the outcome of <i>{REPORT_TITLE}</i>, a group project in Advanced Biomedical Engineering Studio B at the University of Technology Sydney.</p></div>
+      <div className="grid2 aboutgrid">
+        <div className="card"><h3>Project background</h3>
+          <p>Knee osteoarthritis (KOA) is the progressive degeneration of the knee joint, with loss of articular cartilage and structural changes that cause pain, stiffness, swelling and reduced mobility. Osteoarthritis affected an estimated 595 million people worldwide in 2020 (7.6% of the global population), with the knee the most affected joint, and around 2.1 million Australians in 2022.</p>
+          <p>Severity is graded on X-rays with the Kellgren–Lawrence (KL) scale from 0 (no features) to 4 (severe). Manual grading takes time and expertise, and readers often disagree, especially at the boundary between KL 0, KL 1 and KL 2. Convolutional neural networks can learn radiographic features such as osteophytes and joint-space narrowing directly from images, which may make grading more consistent.</p></div>
+        <div className="card"><h3>Project objectives</h3>
+          <p>To develop and optimise a CNN that automatically classifies knee osteoarthritis severity from X-ray images according to the Kellgren–Lawrence system, and to present it as a clinician-facing second opinion.</p>
+          <p>Six specifications were set in advance, covering data integrity, three-group accuracy, choice of architecture, five-grade accuracy, explainability and a working clinical prototype (see the results below).</p></div>
+        <div className="card"><h3>Model development</h3>
+          <p>Models were built in MATLAB with the Deep Learning Toolbox using transfer learning from pretrained networks. Radiographs were contrast-enhanced with CLAHE, kept at 224 × 224 pixels and copied into three channels; training images were augmented with random rotations (±10°) and shifts (±5 pixels).</p>
+          <p>Four architectures were compared under an identical protocol: ResNet-18, ResNet-50, ResNet-101 and EfficientNet-B0, each trained with three random seeds and combined into an ensemble. Class imbalance was addressed with class-weighted loss, grouping the five grades into three severity groups and balanced sampling. Candidate pipelines were chosen on validation data only; the final pipeline was then tested once. The trained networks were exported to ONNX so that the same pipeline runs in the browser.</p></div>
+        <div className="card"><h3>Dataset</h3>
+          <p>The Knee Osteoarthritis Severity Grading Dataset (Chen, 2018) contains 8,260 knee radiographs from the Osteoarthritis Initiative, cropped to the knee at 224 × 224 pixels and labelled KL 0–4. The official kneeKL224 split was used: 5,778 training, 826 validation and 1,656 test images, with no patient in more than one subset.</p>
+          <p>The grades are strongly imbalanced (3,253 KL 0 images against 251 KL 4). The main output therefore groups them into three severity categories, KL 0–1, KL 2 and KL 3–4, while a second model estimates the full five-grade KL score.</p></div>
+      </div>
+
+      <div className="card abouttable">
+        <h3>Results against the project specifications</h3>
+        <p className="mini">Final results on the 1,656 held-out test radiographs (828 patients); 95% confidence interval from a patient-level bootstrap.</p>
+        <div className="tablewrap"><table className="ver specs">
+          <thead><tr><th>Spec.</th><th>Area</th><th>Target</th><th>Test result</th><th>Status</th></tr></thead>
+          <tbody>{specs.map(s => <tr key={s[0]}><td>{s[0]}</td><td>{s[1]}</td><td>{s[2]}</td><td>{s[3]}</td><td><span className={`status ${s[4].startsWith('Met') || s[4] === 'Answered' ? 'ok' : 'part'}`}>{s[4]}</span></td></tr>)}</tbody>
+        </table></div>
+        <p className="mini">In short: the compact ResNet-18 matched or outperformed deeper and alternative networks, most errors were between neighbouring grades, and Grad-CAM attention was concentrated on the knee joint. Knees near the KL 1/KL 2 boundary remained the most common source of error.</p>
+      </div>
+
+      <h3 className="abouth">Model limitations</h3>
+      <ul className="limitlist">{limits.map(([t, d]) => <li key={t}><b>{t}</b>{d}</li>)}</ul>
+
+      <div className="grid2 aboutgrid">
+        <div className="card"><h3>Next steps</h3>
+          <ol className="nextsteps">
+            <li>A blinded clinician re-read of the 137 suspect test labels, to separate label error from model error at the KL 1/KL 2 boundary.</li>
+            <li>External validation on an independent cohort, such as the Multicenter Osteoarthritis Study.</li>
+            <li>Technical changes for the minority grades, including higher-resolution joint-centred crops and medical-domain pretraining.</li>
+            <li>A clinician reader study of the prototype measuring agreement, grading time and automation bias.</li>
+          </ol></div>
+        <div className="card"><h3>Academic context</h3>
+          <p>Developed by Group 16 (Amy Stokes, Hovig Melkonyants, Abbey Lown and Habiba Abdelalim) in Advanced Biomedical Engineering Studio B, Spring 2026, at the University of Technology Sydney.</p>
+          <p>Hovig Melkonyants undertook the model development and optimisation for the project and built this website, which runs the final models in the browser.</p></div>
+      </div>
+
+      <Disclaimer />
     </section>
   );
 }
@@ -348,8 +412,15 @@ function Footer() {
   return (
     <footer className="foot">
       <div className="wrap">
-        <p><b>Hovig Melkonyants</b> · Biomedical Engineering, University of Technology Sydney. Model development and optimisation for the Group 16 knee-OA project, Advanced Biomedical Engineering Studio B (2026).</p>
-        <p className="mini">Data: Chen P. (2018), Knee Osteoarthritis Severity Grading Dataset, Mendeley Data, from the Osteoarthritis Initiative; sample images are held-out test knees. Models: MATLAB Deep Learning Toolbox, served with ONNX Runtime Web. Research prototype only; not for clinical use.</p>
+        <div className="footgrid">
+          <div><b className="footname">Hovig Melkonyants</b><span>Biomedical Engineering (Honours)</span><span>University of Technology Sydney (UTS)</span></div>
+          <div><h4>Project</h4><span>Knee Osteoarthritis Severity Classification Using CNNs</span><span>Advanced Biomedical Engineering Studio B · Group 16 · 2026</span>
+            <small>Developed as part of <i>{REPORT_TITLE}</i>. Model development and optimisation undertaken for the Group 16 Knee Osteoarthritis Project.</small></div>
+          <div><h4>Technology</h4><span>MATLAB Deep Learning Toolbox</span><span>ONNX Runtime Web</span></div>
+          <div><h4>Data attribution</h4><span>Knee Osteoarthritis Severity Grading Dataset · Mendeley Data · Osteoarthritis Initiative</span>
+            <small>Chen, P. (2018), <a href={DATASET_DOI} target="_blank" rel="noopener noreferrer">doi:10.17632/56rmx5bjcr.1</a>. Demonstration images are drawn from the held-out test set.</small></div>
+        </div>
+        <p className="footdisc"><b>Research Prototype · Not for Clinical Use.</b> Academic research prototype only. Not validated or approved for clinical diagnosis or medical use.</p>
       </div>
     </footer>
   );

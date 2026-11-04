@@ -236,6 +236,7 @@ export default function Workstation({ load }) {
                   {res.checks.level !== 'OK' && <p>Image check ({res.checks.level}): {res.checks.issues.join('; ')}</p>}
                   {refKL !== null && <p>Dataset reference label (demonstration only): KL{refKL}</p>}
                 </div>
+                <p className="rpnote"><b>Research prototype · not for clinical use.</b> This result is for demonstration only and must not be used for diagnosis or treatment decisions.</p>
                 <div className="tabs">{[['clin', 'Clinician summary'], ['pat', 'Patient summary']].map(([k, l]) =>
                   <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
                 {tab !== 'find' ? <>
@@ -251,7 +252,7 @@ export default function Workstation({ load }) {
               </>}
         </section>
       </div>
-      <div className="wsfoot">Research prototype, not a medical device. Decision support only: the clinician makes the diagnosis. Validated only on the OAI kneeKL224 test set (1,656 knees).</div>
+      <div className="wsfoot">Research prototype · not for clinical use. Not clinically validated or approved as a medical device; evaluated only on the OAI kneeKL224 test set (1,656 knees). Results must not replace assessment by a qualified healthcare professional.</div>
     </div>
   );
 }
