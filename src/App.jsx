@@ -97,7 +97,7 @@ function AppView({ load }) {
 function Hero({ load }) {
   return (
     <section className="hero wrap">
-      <p className="pill">Research prototype · Biomedical Engineering, UTS</p>
+      <p className="pill">An interactive prototype of AI in biomedical engineering</p>
       <h1>Grading knee osteoarthritis from a single X-ray, <em>entirely in your browser.</em></h1>
       <p className="lede">
         A clinician-first second opinion: a three-seed ResNet-18 ensemble reads a knee radiograph, places it in one of
