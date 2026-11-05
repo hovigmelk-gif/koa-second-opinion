@@ -484,7 +484,7 @@ function About() {
   const topics = [
     ['book', 'Background', <>
       <p>Knee osteoarthritis (KOA) is the progressive degeneration of the knee joint, with loss of articular cartilage and structural changes that cause pain, stiffness, swelling and reduced mobility. Osteoarthritis affected an estimated 595 million people worldwide in 2020 (7.6% of the global population), with the knee the most affected joint, and around 2.1 million Australians in 2022.</p>
-      <p>Severity is graded on X-rays with the Kellgren–Lawrence (KL) scale from 0 (no features) to 4 (severe). Manual grading takes time and expertise, and readers often disagree, especially at the boundary between KL 0, KL 1 and KL 2. Convolutional neural networks can learn radiographic features such as osteophytes and joint-space narrowing directly from images, which may make grading more consistent.</p></>],
+      <p>Severity is graded on X-rays with the Kellgren–Lawrence (KL) scale from 0 (no features) to 4 (severe). Manual grading takes time and expertise, and readers often disagree, especially at the boundary between KL 0, KL 1 and KL 2. A convolutional neural network (CNN) is a type of AI that learns to recognise patterns in images by passing them through many layers of small filters, building up from simple edges to complex shapes. CNNs can learn radiographic features such as osteophytes and joint-space narrowing directly from X-rays, which may make grading more consistent.</p></>],
     ['target', 'Objectives', <>
       <p>To develop and optimise a CNN that automatically classifies knee osteoarthritis severity from X-ray images according to the Kellgren–Lawrence system, and to present it as a clinician-facing second opinion.</p>
       <p>Six specifications were set in advance, covering data integrity, three-group accuracy, choice of architecture, five-grade accuracy, explainability and a working clinical prototype (see the Results tab).</p></>],
@@ -644,7 +644,7 @@ function Reviews() {
           <label>Your rating<Stars n={f.rating} size={26} onPick={rating => setF({ ...f, rating })} /></label>
           <label>Name<input value={f.name} maxLength={80} onChange={e => setF({ ...f, name: e.target.value })} placeholder="Your name" /></label>
           <label>Role or organisation <em>(optional)</em><input value={f.role} maxLength={100} onChange={e => setF({ ...f, role: e.target.value })} placeholder="e.g. Physiotherapist, UTS student" /></label>
-          <label>Comment<textarea rows={4} value={f.comment} maxLength={1000} onChange={e => setF({ ...f, comment: e.target.value })} placeholder="What worked, what would you change?" /></label>
+          <label>Comment<textarea rows={4} value={f.comment} maxLength={1000} onChange={e => setF({ ...f, comment: e.target.value })} placeholder="What worked? What would you change?" /></label>
           <button className="btn primary" disabled={st === 'sending'}>{st === 'sending' ? 'Posting…' : 'Post review'}</button>
           {st && st !== 'sending' && <p className="formnote">{st}</p>}
           <p className="mini">Reviews are public. Please don't include patient information.</p>
@@ -681,7 +681,7 @@ function Connect() {
         <div>
           <p className="eyebrow">Connect</p>
           <h2>Let's talk</h2>
-          <p className="lede sm">I'm a biomedical engineering student at UTS working on machine learning for medical imaging, with a focus on bionics and the lower limb. Open to research collaborations, internships and graduate roles.</p>
+          <p className="lede sm">I'm a biomedical engineering student at UTS working on machine learning for medical imaging, with a focus on bionics and lower-limb prosthetics. Open to research collaborations, internships and graduate roles.</p>
           {LINKEDIN && <a className="btn linkedin" href={LINKEDIN} target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13zM7.12 20.45H3.56V9h3.56v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0z"/></svg>Connect on LinkedIn</a>}
         </div>
         <form className="card form" onSubmit={submit}>
