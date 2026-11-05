@@ -260,3 +260,11 @@ button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;t
 .dfstep{overflow-wrap:break-word}
 @media (max-width:1099px){.devflow{gap:2px;padding:10px}.dfarrow{line-height:1;font-size:13px;margin:-1px 0}.dfstep:not(.small){padding:7px 12px}.dfbranch{gap:4px;margin:2px 0}}
 @media (max-width:1099px){.dfarrow{display:block;width:14px;height:14px;line-height:14px;text-align:center;margin:1px 0;transform:rotate(90deg);color:#4e6283}}
+/* MATLAB app video */
+.vidgrid{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(240px,1fr);gap:18px;align-items:start}
+.vidbox video{display:block;width:100%;aspect-ratio:16/10;background:#000;border:1px solid var(--line);border-radius:14px}
+.chapters{list-style:none;margin:0;padding:6px;background:var(--card);border:1px solid var(--line);border-radius:14px;display:grid;gap:2px}
+.chapters button{display:flex;gap:12px;align-items:baseline;width:100%;background:none;border:0;border-radius:9px;padding:9px 10px;color:var(--ink2);font:14px/1.4 var(--sans);text-align:left;cursor:pointer}
+.chapters button:hover{background:var(--track);color:var(--ink)}.chapters button.on{background:rgba(20,184,166,.12);color:#fff}
+.chapters em{font:500 12.5px var(--mono);font-style:normal;color:var(--teal2);flex:none;width:38px}
+@media (max-width:900px){.vidgrid{grid-template-columns:1fr}}

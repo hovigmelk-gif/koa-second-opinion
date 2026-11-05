@@ -56,6 +56,7 @@ export default function App() {
         <KLScale load={load} />
         <Results />
         <Verification load={load} />
+        <MatlabVideo />
         <Gallery />
         <CtaBand load={load} />
         <Reviews />
@@ -357,6 +358,42 @@ function Results() {
   );
 }
 
+// Screen recording of the original MATLAB app (KOA_App), with clickable chapters
+function MatlabVideo() {
+  const v = useRef(null);
+  const [t, setT] = useState(0);
+  const chapters = [
+    [0, 'Open a held-out test X-ray'],
+    [25, 'Blind first: record your own grade and a note'],
+    [60, 'Compare with AI: grade, probabilities and Grad-CAM'],
+    [75, 'Clinician and patient summaries'],
+    [90, 'Structured radiographic and clinical findings'],
+    [250, 'Local vision-language model (beta)'],
+    [360, 'Summary engine: local LLM option'],
+    [475, 'Save the quick summary (PDF)'],
+    [510, 'Save the detailed report (PDF)'],
+  ];
+  const fmt = x => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`;
+  const cur = chapters.reduce((a, c, i) => (t >= c[0] ? i : a), 0);
+  const jump = x => { const el = v.current; if (!el) return; el.currentTime = x; el.play().catch(() => {}); };
+  return (
+    <section id="demo" className="wrap sec">
+      <div className="sec-head"><p className="eyebrow">Video demonstration</p><h2>The original MATLAB app in action</h2>
+        <p>The app on this website is a browser version of KOA_App, the clinician-facing prototype built in MATLAB App Designer. This screen recording walks through one held-out test knee from start to finish, including features that exist only in the MATLAB version: the optional local vision-language and language models and the PDF case reports. Click a chapter to jump to it.</p></div>
+      <div className="vidgrid">
+        <div className="vidbox">
+          <video ref={v} controls preload="metadata" playsInline poster="/video/matlab-app-demo.jpg" onTimeUpdate={e => setT(e.currentTarget.currentTime)}>
+            <source src="/video/matlab-app-demo.mp4" type="video/mp4" />
+            Your browser cannot play this video.
+          </video>
+          <p className="mini">Screen recording, 10 min 22 s, no sound. Research prototype · not for clinical use.</p>
+        </div>
+        <ol className="chapters" aria-label="Video chapters">{chapters.map(([x, l], i) => (
+          <li key={x}><button className={i === cur && t > 0 ? 'on' : ''} onClick={() => jump(x)}><em>{fmt(x)}</em><span>{l}</span></button></li>))}</ol>
+      </div>
+    </section>
+  );
+}
 function Verification({ load }) {
   const rows = [
     ['9003175L', 'KL 0', 'KL 0–1', 97.59, 97.57, 'KL 0'],
