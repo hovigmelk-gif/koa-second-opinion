@@ -275,3 +275,12 @@ button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;t
   .devphases::before{left:17px;right:auto;top:18px;bottom:18px;width:2px;height:auto;background:linear-gradient(180deg,var(--teal2),#f2a93b)}
   .devphases li{padding:0}.dpnode{position:absolute;left:-46px;top:-4px}.devphases h5{text-align:left;margin-top:6px}}
 .dpitem,.dpchart{box-sizing:border-box;width:100%;align-self:stretch}.dpitem{flex:1 1 auto}
+/* About: literature comparison, references; video notes */
+.subhead{margin:18px 0 6px;font-size:15px;color:var(--ink)}
+.litlist{margin:6px 0 0;padding-left:18px;display:grid;gap:8px;color:var(--ink2);font-size:14.5px;line-height:1.55}.litlist b{color:var(--ink)}
+.reflist{margin:4px 0 0;padding-left:22px;display:grid;gap:8px;font-size:13.5px;line-height:1.5;color:var(--ink2)}
+.reflist a{color:var(--teal2);overflow-wrap:anywhere}
+.vidnotes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.vidnotes>div{background:var(--track);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.vidnotes h4{margin:0 0 6px;font-size:13.5px;color:var(--ink)}.vidnotes p{margin:0;font-size:13px;line-height:1.55;color:var(--ink2)}
+@media (max-width:700px){.vidnotes{grid-template-columns:1fr}}

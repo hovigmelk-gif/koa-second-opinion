@@ -270,6 +270,7 @@ const ICONS = {
   alert: <><path d="M12 3.5L21.5 20h-19z" /><path d="M12 10v4.5M12 17.5v.1" /></>,
   arrow: <><path d="M4 12h15M13 6l6 6-6 6" /></>,
   globe: <><circle cx="12" cy="12" r="8.5" /><path d="M3.5 12h17M12 3.5c2.5 2.6 3.7 5.4 3.7 8.5s-1.2 5.9-3.7 8.5c-2.5-2.6-3.7-5.4-3.7-8.5s1.2-5.9 3.7-8.5z" /></>,
+  list: <><path d="M9 6.5h11M9 12h11M9 17.5h11" /><circle cx="4.8" cy="6.5" r="1.1" /><circle cx="4.8" cy="12" r="1.1" /><circle cx="4.8" cy="17.5" r="1.1" /></>,
   grid3: <><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17" /></>,
   grid5: <><rect x="3.5" y="3.5" width="17" height="17" rx="2.5" /><path d="M3.5 6.9h17M3.5 10.3h17M3.5 13.7h17M3.5 17.1h17M6.9 3.5v17M10.3 3.5v17M13.7 3.5v17M17.1 3.5v17" /></>,
 };
@@ -327,7 +328,7 @@ function Results() {
     ['grid3', '3-group confusion matrix', <>
       <p className="what"><b>What this shows:</b> the final 3-group model's answers for all 1,656 test knees. Each row is a knee's true severity group and each column is the model's answer, so the diagonal holds the correct answers. Healthy or doubtful knees (KL 0–1) are recognised 88% of the time and moderate to severe knees (KL 3–4) 76% of the time, but only 47% of minimal-OA (KL 2) knees are found.</p>
       <InteractiveCM cm={cm} labels={GROUP_SHORT} start={[1, 0]} unitName="group" />
-      <p className="mini">Accuracy 74.94% (95% CI 72.71–77.12), balanced accuracy 70.47%, macro F1 71.40, QWK 0.730. KL 2 is the hardest group: the boundary with KL 0–1 is uncertain even between expert readers.</p></>],
+      <p className="mini">Accuracy 74.94% (95% CI 72.71–77.12), balanced accuracy 70.47%, macro F1 71.40, QWK 0.730. 98.1% of answers were correct or one group off: only 31 knees were confused between KL 0–1 and KL 3–4. KL 2 is the hardest group: the boundary with KL 0–1 is uncertain even between expert readers.</p></>],
     ['grid5', '5-grade confusion matrix', <>
       <p className="what"><b>What this shows:</b> the same idea for all five KL grades, from Model 4B, the model behind the KL grade in the app. Exact answers sit on the diagonal; the dashed cells beside it are one grade off. 58.9% of knees get the exact grade and 86.7% are within one grade, because the model was trained so that near misses cost less than far-off answers.</p>
       <div className="cm5stats"><span><b>58.9%</b>exact</span><span><b>86.7%</b>within one</span><span><b>0.711</b>QWK</span><span><b>0.555</b>MAE</span></div>
@@ -387,6 +388,10 @@ function MatlabVideo() {
             Your browser cannot play this video.
           </video>
           <p className="mini">Screen recording, 10 min 22 s, no sound. Research prototype · not for clinical use.</p>
+          <div className="vidnotes">
+            <div><h4>Example case from the report</h4><p>For test knee 9049999R, the 3-group model predicted KL 2 with a score of 75.8% (KL 0–1 19.2%, KL 3–4 5.1%), and the five-grade model also predicted KL 2 (52.4%; KL 1 30.3%, KL 0 14.6%). Both agreed with the clinician grade of KL 2, recorded before the AI result was shown, and the Grad-CAM map centred on the joint line. One case shows how the app works; it says nothing about overall accuracy.</p></div>
+            <div><h4>Saving a case</h4><p>Besides the quick and detailed PDF reports, the MATLAB app saves each case as a JSON record and a CSV log, and can remove identifying details from exported reports.</p></div>
+          </div>
         </div>
         <ol className="chapters" aria-label="Video chapters">{chapters.map(([x, l], i) => (
           <li key={x}><button className={i === cur && t > 0 ? 'on' : ''} onClick={() => jump(x)}><em>{fmt(x)}</em><span>{l}</span></button></li>))}</ol>
@@ -461,6 +466,21 @@ function Verification({ load }) {
 }
 
 const REPORT_TITLE = 'Development of a Convolutional Neural Network (CNN) to Classify the Severity of Knee Osteoarthritis (KOA) from X-Rays';
+const REFS = [
+  ['GBD 2021 Osteoarthritis Collaborators (2023). Global, regional, and national burden of osteoarthritis, 1990–2020 and projections to 2050. The Lancet Rheumatology, 5(9), e508–e522.', 'https://doi.org/10.1016/S2665-9913(23)00163-7'],
+  ['Australian Institute of Health and Welfare (2024). Chronic musculoskeletal conditions: Osteoarthritis.', 'https://www.aihw.gov.au/reports/chronic-musculoskeletal-conditions/musculoskeletal-conditions/contents/osteoarthritis'],
+  ['Kellgren, J. H., & Lawrence, J. S. (1957). Radiological assessment of osteo-arthrosis. Annals of the Rheumatic Diseases, 16(4), 494–502.'],
+  ['Beyaz, S., Yayli, S. B., & Kılıç, K. (2025). From variability to consistency: Building a Kellgren-Lawrence gonarthrosis dataset. Journal of Orthopaedic Surgery and Research, 20, 922.', 'https://doi.org/10.1186/s13018-025-06057-8'],
+  ['Vaattovaara, E., et al. (2025). Kellgren-Lawrence grading of knee osteoarthritis using deep learning: Diagnostic performance with external dataset and comparison with four readers. Osteoarthritis and Cartilage Open, 7(2), 100580.', 'https://doi.org/10.1016/j.ocarto.2025.100580'],
+  ['Chen, P., Gao, L., Shi, X., Allen, K., & Yang, L. (2019). Fully automatic knee osteoarthritis severity grading using deep neural networks with a novel ordinal loss. Computerized Medical Imaging and Graphics, 75, 84–92.', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC9531250/'],
+  ['Mohammed, A. S., Hasanaath, A. A., Latif, G., & Bashar, A. (2023). Knee osteoarthritis detection and severity classification using residual neural networks on preprocessed X-ray images. Diagnostics, 13(8), 1380.', 'https://www.mdpi.com/2075-4418/13/8/1380'],
+  ['Chen, P. (2018). Knee osteoarthritis severity grading dataset (Version 1). Mendeley Data.', 'https://doi.org/10.17632/56rmx5bjcr.1'],
+  ['Zuiderveld, K. (1994). Contrast limited adaptive histogram equalization. In P. S. Heckbert (Ed.), Graphics Gems IV (pp. 474–485). Academic Press.'],
+  ['He, K., Zhang, X., Ren, S., & Sun, J. (2016). Deep residual learning for image recognition. Proc. IEEE CVPR, 770–778.', 'https://arxiv.org/abs/1512.03385'],
+  ['Tan, M., & Le, Q. V. (2019). EfficientNet: Rethinking model scaling for convolutional neural networks. Proc. ICML, 6105–6114.', 'https://arxiv.org/abs/1905.11946'],
+  ['Selvaraju, R. R., et al. (2017). Grad-CAM: Visual explanations from deep networks via gradient-based localization. Proc. IEEE ICCV, 618–626.', 'https://arxiv.org/abs/1610.02391'],
+  ['Durkalski, V. L., Palesch, Y. Y., Lipsitz, S. R., & Rust, P. F. (2003). Analysis of clustered matched-pair data. Statistics in Medicine, 22(15), 2417–2428.', 'https://doi.org/10.1002/sim.1438'],
+];
 const DATASET_DOI = 'https://doi.org/10.17632/56rmx5bjcr.1';
 function Disclaimer() {
   return (
@@ -527,8 +547,8 @@ function About() {
   ];
   const topics = [
     ['book', 'Background', <>
-      <p>Knee osteoarthritis (KOA) is the progressive degeneration of the knee joint, with loss of articular cartilage and structural changes that cause pain, stiffness, swelling and reduced mobility. Osteoarthritis affected an estimated 595 million people worldwide in 2020 (7.6% of the global population), with the knee the most affected joint, and around 2.1 million Australians in 2022.</p>
-      <p>Severity is graded on X-rays with the Kellgren–Lawrence (KL) scale from 0 (no features) to 4 (severe). Manual grading takes time and expertise, and readers often disagree, especially at the boundary between KL 0, KL 1 and KL 2.</p>
+      <p>Knee osteoarthritis (KOA) is the progressive degeneration of the knee joint, with loss of articular cartilage and structural changes that cause pain, stiffness, swelling and reduced mobility. Osteoarthritis affected an estimated 595 million people worldwide in 2020 (7.6% of the global population), with the knee the most affected joint (GBD 2021 Osteoarthritis Collaborators, 2023), and around 2.1 million Australians in 2022 (AIHW, 2024).</p>
+      <p>Severity is graded on X-rays with the Kellgren–Lawrence (KL) scale from 0 (no features) to 4 (severe) (Kellgren &amp; Lawrence, 1957). Manual grading takes time and expertise, and readers often disagree, especially at the boundary between KL 0, KL 1 and KL 2. In a study of 15,159 radiographs, agreement with expert consensus on the five grades was only slight to fair (Beyaz et al., 2025), and even experienced musculoskeletal readers reach a quadratic weighted kappa of only 0.72–0.77 with each other (Vaattovaara et al., 2025).</p>
       <p>A convolutional neural network (CNN) is a type of AI that learns to recognise patterns in images by passing them through many layers of small filters, building up from simple edges to complex shapes. CNNs can learn radiographic features such as osteophytes and joint-space narrowing directly from X-rays, which may make grading more consistent.</p></>],
     ['target', 'Objectives', <>
       <p>To develop and optimise a CNN that automatically classifies knee osteoarthritis severity from X-ray images according to the Kellgren–Lawrence system, and to present it as a clinician-facing second opinion.</p>
@@ -545,7 +565,14 @@ function About() {
         <thead><tr><th>Spec.</th><th>Area</th><th>Target</th><th>Test result</th><th>Status</th></tr></thead>
         <tbody>{specs.map(r => <tr key={r[0]}><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td><td>{r[3]}</td><td><span className={`status ${r[4].startsWith('Met') || r[4] === 'Answered' ? 'ok' : 'part'}`}>{r[4]}</span></td></tr>)}</tbody>
       </table></div>
-      <p className="mini">In short: the compact ResNet-18 matched or outperformed deeper and alternative networks, most errors were between neighbouring grades, and Grad-CAM attention was concentrated on the knee joint. Knees near the KL 1/KL 2 boundary remained the most common source of error.</p></>],
+      <p className="mini">In short: the compact ResNet-18 matched or outperformed deeper and alternative networks, most errors were between neighbouring grades, and Grad-CAM attention was concentrated on the knee joint. Knees near the KL 1/KL 2 boundary remained the most common source of error.</p>
+      <h4 className="subhead">How this compares with published work</h4>
+      <p>Studies group the KL grades differently and use different images and splits, so the numbers below are context, not a head-to-head ranking.</p>
+      <ul className="litlist">
+        <li><b>Chen et al. (2019)</b> reported 69.7% five-grade accuracy (mean absolute error 0.344 grades) with an ordinal loss, on their own split. This project's five-grade model reached 58.88% (error 0.555).</li>
+        <li><b>Vaattovaara et al. (2025)</b> reported a five-grade balanced accuracy of 69.3% on an external dataset, comparable to experienced readers, rising to 90.2% for KL 0–1 versus KL 2–4.</li>
+        <li><b>Mohammed et al. (2023)</b> reported 79.7% on the yes/no question KL 0–1 versus KL 2–4. On the same question, this project's final pipeline scores 79.95%, level with that result. Their headline 89% “three-class” figure covered only KL 2, KL 3 and KL 4, so it leaves out the hardest boundary.</li>
+      </ul></>],
     ['alert', 'Limitations', <ul className="limitlist">{limits.map(([t, d]) => <li key={t}><b>{t}</b>{d}</li>)}</ul>],
     ['arrow', 'Next steps', <ol className="nextsteps">
       <li>A blinded clinician re-read of the 137 suspect test labels, to separate label error from model error at the KL 1/KL 2 boundary.</li>
@@ -553,6 +580,9 @@ function About() {
       <li>Technical changes for the minority grades, including higher-resolution joint-centred crops and medical-domain pretraining.</li>
       <li>A clinician reader study of the prototype measuring agreement, grading time and automation bias.</li>
     </ol>],
+    ['list', 'References', <>
+      <p className="mini lead">Sources cited on this website. The project report contains the full reference list.</p>
+      <ol className="reflist">{REFS.map(([t, u]) => <li key={t}>{t}{u && <> <a href={u} target="_blank" rel="noopener noreferrer">{u.replace('https://', '')}</a></>}</li>)}</ol></>],
   ];
   return (
     <section id="about" className="wrap sec about">
