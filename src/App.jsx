@@ -465,7 +465,6 @@ function Verification({ load }) {
   );
 }
 
-const REPORT_TITLE = 'Development of a Convolutional Neural Network (CNN) to Classify the Severity of Knee Osteoarthritis (KOA) from X-Rays';
 const REFS = [
   ['GBD 2021 Osteoarthritis Collaborators (2023). Global, regional, and national burden of osteoarthritis, 1990–2020 and projections to 2050. The Lancet Rheumatology, 5(9), e508–e522.', 'https://doi.org/10.1016/S2665-9913(23)00163-7'],
   ['Australian Institute of Health and Welfare (2024). Chronic musculoskeletal conditions: Osteoarthritis.', 'https://www.aihw.gov.au/reports/chronic-musculoskeletal-conditions/musculoskeletal-conditions/contents/osteoarthritis'],
@@ -519,7 +518,7 @@ function DevFlow() {
     </>],
     ['Bring it to the web', <>
       <Item ic="globe" l="Export to ONNX, run in the browser" t="The trained networks were exported to ONNX and the rest of the pipeline rebuilt in JavaScript, so the models run in your browser." />
-      <Item ic="check" l="Checked against MATLAB" t="The browser version was checked against MATLAB on all 1,656 test knees and gives the same results." />
+      <Item ic="check" l="Checked against MATLAB" t="A full-precision version of the browser code reproduced the MATLAB results on all 1,656 test knees. The smaller half-precision models used on this website were also compared with MATLAB on five reference knees (see Verification)." />
     </>],
   ];
   return (<>
@@ -581,13 +580,13 @@ function About() {
       <li>A clinician reader study of the prototype measuring agreement, grading time and automation bias.</li>
     </ol>],
     ['list', 'References', <>
-      <p className="mini lead">Sources cited on this website. The project report contains the full reference list.</p>
+      <p className="mini lead">Sources cited on this website. The Group 16 coursework report contains the full reference list.</p>
       <ol className="reflist">{REFS.map(([t, u]) => <li key={t}>{t}{u && <> <a href={u} target="_blank" rel="noopener noreferrer">{u.replace('https://', '')}</a></>}</li>)}</ol></>],
   ];
   return (
     <section id="about" className="wrap sec about">
       <div className="sec-head"><p className="eyebrow">About the project</p><h2>Why this project exists, and how it was built</h2>
-        <p>This website presents the outcome of the project <i>{REPORT_TITLE}</i>. Choose a topic below to read more.</p></div>
+        <p>This website presents KOA Second Opinion, a browser-based research prototype developed by Hovig Melkonyants. It builds on technical work undertaken within a Group 16 biomedical engineering coursework project; the development roles and project origins are described at the bottom of the page. Choose a topic below to read more.</p></div>
       <IconTabs id="about" label="About the project" items={topics} />
       <Disclaimer />
     </section>
@@ -600,8 +599,8 @@ function Footer() {
       <div className="wrap">
         <div className="footgrid">
           <div><b className="footname">Hovig Melkonyants</b><span>Bachelor of Engineering (Honours)</span><span>Major: Biomedical Engineering</span><span>University of Technology Sydney (UTS)</span></div>
-          <div><h4>Project</h4><span>Knee Osteoarthritis Severity Classification Using CNNs</span><span>Advanced Biomedical Engineering Studio B · Group 16 · 2026</span>
-            <small>Developed as part of <i>{REPORT_TITLE}</i>. Model development and optimisation undertaken for the Group 16 Knee Osteoarthritis Project.</small></div>
+          <div><h4>Project</h4><span>KOA Second Opinion: Web-Based Knee Osteoarthritis Grading</span><span>Developed by Hovig Melkonyants</span><span>University of Technology Sydney · 2026</span>
+            <small>This research prototype originated within the Group 16 knee osteoarthritis coursework project for Advanced Biomedical Engineering Studio B. Hovig Melkonyants independently implemented and trained the models presented here, conducted the experimental comparisons, optimisation and analysis, and developed the MATLAB prototype and browser-based application.</small></div>
           <div><h4>Technology</h4><span>MATLAB Deep Learning Toolbox</span><span>ONNX Runtime Web</span></div>
           <div><h4>Data attribution</h4><span>Knee Osteoarthritis Severity Grading Dataset · Mendeley Data · Osteoarthritis Initiative</span>
             <small>Chen, P. (2018), <a href={DATASET_DOI} target="_blank" rel="noopener noreferrer">doi:10.17632/56rmx5bjcr.1</a>. Demonstration images are drawn from the held-out test set.</small></div>
@@ -953,7 +952,7 @@ function Gallery() {
   return (
     <section id="figures" className="wrap sec">
       <div className="sec-head"><p className="eyebrow">Figures</p><h2>The full evaluation, figure by figure</h2>
-        <p>All {FIGS.length} figures from the project report, generated from the saved test predictions. Open a category, pick a figure, and read how to read it and what it shows. Click a figure to view it full-screen; use the arrow keys to browse within the category.</p></div>
+        <p>{FIGS.length} evaluation figures generated by Hovig Melkonyants from the saved model predictions and experimental records. These figures also supported the earlier Group 16 coursework report. Open a category, pick a figure, and read how to read it and what it shows. Click a figure to view it full-screen; use the arrow keys to browse within the category.</p></div>
       <IconTabs id="figs" label="Figure categories" items={tabs} collapsible />
       {open >= 0 && (
         <div className="lightbox" onClick={() => setOpen(-1)}>
