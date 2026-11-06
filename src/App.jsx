@@ -472,33 +472,40 @@ function Disclaimer() {
   );
 }
 // Figure 1 of the report, redrawn: how the final model was developed, with hover/tap notes
+// How the final model was developed: four phases on a timeline, with hover/tap notes
 function DevFlow() {
-  const Step = ({ ic, l, t, cls = '' }) => <Tip className={`dfstep below ${cls}`} t={t}><Icon n={ic} /><span>{l}</span></Tip>;
-  const Arrow = () => <span className="dfarrow" aria-hidden="true">→</span>;
+  const Item = ({ ic, l, t }) => <Tip className="dpitem below" t={t}><Icon n={ic} /><span>{l}</span></Tip>;
+  const nets = [
+    ['ResNet-18', 74.03, '11.2 million parameters, 74.03% three-group test accuracy. The smallest and fastest network, and the one that was kept.'],
+    ['ResNet-101', 74.15, '42.6 million parameters, 74.15%. Not significantly better than ResNet-18 (p = 0.91) and about four times as slow.'],
+    ['ResNet-50', 72.83, '23.5 million parameters, 72.83%. Not significantly different from ResNet-18 (p = 0.21), about twice as slow, and it overfitted more.'],
+    ['EfficientNet-B0', 70.23, '4.0 million parameters, 70.23%. Significantly worse than ResNet-18 under the same protocol (−3.80 points, p = 0.0015).'],
+  ];
+  const phases = [
+    ['Prepare the data', <>
+      <Item ic="database" l="8,260 graded knee X-rays" t="8,260 knee X-rays from the Osteoarthritis Initiative (Chen, 2018), graded KL 0–4 and split into 5,778 training, 826 validation and 1,656 test images, with no patient in more than one set." />
+      <Item ic="contrast" l="Contrast enhancement and augmentation" t="CLAHE contrast enhancement, images kept at 224 × 224 pixels and the grey image copied into three channels. Training images were also randomly rotated (±10°) and shifted (±5 pixels)." />
+    </>],
+    ['Pick a network', <>
+      <Item ic="grid5" l="5-grade baseline: 55.5%" t="A first ResNet-18 was trained to predict all five KL grades, as a starting point (55.5% test accuracy)." />
+      <Tip className="dpchart below" t="Each network was compared on accuracy, balanced accuracy, F1 score, recall, precision, specificity, QWK and confusion matrices, with three random seeds each. ResNet-18 gave the best balance of accuracy, size and speed.">
+        <small>Three-group test accuracy, four networks</small>
+        {nets.map(([n, v]) => <div key={n} className={n === 'ResNet-18' ? 'pick' : ''}><span>{n}</span><i><b style={{ width: `${(v - 60) * 100 / 16}%` }} /></i><em>{v.toFixed(1)}</em></div>)}
+      </Tip>
+    </>],
+    ['Refine and lock', <>
+      <Item ic="scale" l="Tackle class imbalance" t="There are 13 healthy knees for every severe one. Three fixes were tested: class-weighted loss, grouping the five grades into three severity groups (KL 0–1, KL 2, KL 3–4) and balanced sampling." />
+      <Item ic="gear" l="Retrain the final models" t="The final models were retrained under a locked protocol: Model 1 for the three groups (three seeds, mirror-image averaging and a 0.10 decision margin) and Model 4B for the five grades (ordinal loss)." />
+    </>],
+    ['Bring it to the web', <>
+      <Item ic="globe" l="Export to ONNX, run in the browser" t="The trained networks were exported to ONNX and the rest of the pipeline rebuilt in JavaScript, so the models run in your browser." />
+      <Item ic="check" l="Checked against MATLAB" t="The browser version was checked against MATLAB on all 1,656 test knees and gives the same results." />
+    </>],
+  ];
   return (<>
-    <div className="devflow">
-      <Step ic="database" l="Dataset acquisition" t="8,260 knee X-rays from the Osteoarthritis Initiative (Chen, 2018), graded KL 0–4 and split into 5,778 training, 826 validation and 1,656 test images, with no patient in more than one set." />
-      <Arrow />
-      <Step ic="contrast" l="Image preprocessing" t="CLAHE contrast enhancement, images kept at 224 × 224 pixels and the grey image copied into three channels. Training images were also randomly rotated (±10°) and shifted (±5 pixels)." />
-      <Arrow />
-      <Step ic="grid5" l="5-class classification" t="A first ResNet-18 was trained to predict all five KL grades, as a starting point (55.5% test accuracy)." />
-      <Arrow />
-      <div className="dfbranch">
-        <Step cls="small" ic="layers" l="ResNet-18" t="11.2 million parameters, 74.03% three-group test accuracy. The smallest and fastest network, and the one that was kept." />
-        <Step cls="small" ic="layers" l="ResNet-50" t="23.5 million parameters, 72.83%. Not significantly different from ResNet-18 (p = 0.21), about twice as slow, and it overfitted more." />
-        <Step cls="small" ic="layers" l="ResNet-101" t="42.6 million parameters, 74.15%. Not significantly better than ResNet-18 (p = 0.91) and about four times as slow." />
-        <Step cls="small" ic="layers" l="EfficientNet-B0" t="4.0 million parameters, 70.23%. Significantly worse than ResNet-18 under the same protocol (−3.80 points, p = 0.0015)." />
-      </div>
-      <Arrow />
-      <Step ic="bars" l="Performance evaluation" t="Each network was compared on accuracy, balanced accuracy, F1 score, recall, precision, specificity, QWK and confusion matrices, with three random seeds each. ResNet-18 gave the best balance of accuracy, size and speed." />
-      <Arrow />
-      <Step ic="scale" l="Class imbalance mitigation" t="There are 13 healthy knees for every severe one. Three fixes were tested: class-weighted loss, grouping the five grades into three severity groups (KL 0–1, KL 2, KL 3–4) and balanced sampling." />
-      <Arrow />
-      <Step ic="gear" l="Retrain model" t="The final models were retrained under a locked protocol: Model 1 for the three groups (three seeds, mirror-image averaging and a 0.10 decision margin) and Model 4B for the five grades (ordinal loss)." />
-      <Arrow />
-      <Step cls="last" ic="globe" l="Website deployment" t="The trained networks were exported to ONNX and the rest of the pipeline rebuilt in JavaScript, so the models run in your browser. The browser version was checked against MATLAB on all 1,656 test knees." />
-    </div>
-    <p className="dfhint">How the final model was developed. Hover over or tap a step for details.</p>
+    <ol className="devphases">{phases.map(([h, body], i) => (
+      <li key={h} className={i === 3 ? 'end' : ''}><div className="dpnode"><em>{i + 1}</em></div><h5>{h}</h5>{body}</li>))}</ol>
+    <p className="dfhint">How the final model was developed, in four phases. Hover over or tap an item for details.</p>
   </>);
 }
 function About() {

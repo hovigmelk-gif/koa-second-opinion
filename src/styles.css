@@ -242,24 +242,10 @@ button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;t
 .stathint{margin:0 0 36px;font-size:12.5px;color:var(--mute)}
 @media (max-width:760px){.stat.tip:nth-child(1){border-radius:13px 0 0 0}.stat.tip:nth-child(2){border-radius:0 13px 0 0}.stat.tip:nth-child(3){border-radius:0 0 0 13px}.stat.tip:nth-child(4){border-radius:0 0 13px 0}}
 /* About > Model development: development flow (report Figure 1) */
-.devflow{display:flex;align-items:center;gap:6px;margin:2px 0 6px;padding:14px 10px;background:var(--track);border:1px solid var(--line);border-radius:12px}
-.dfstep{flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:10px 4px;border:1px solid #2c6b78;background:rgba(20,184,166,.08);border-radius:10px;font-size:12px;line-height:1.3;color:var(--ink)}
-.dfstep svg{color:var(--teal2)}.dfstep.last{border-color:#c27a12;background:rgba(242,169,59,.12)}.dfstep.last svg{color:#f2a93b}
-.dfbranch{flex:1.1 1 0;min-width:0;display:grid;gap:5px}.dfstep.small{flex-direction:row;justify-content:center;padding:6px 4px;font-size:11.5px;border-color:#2c4470;background:#0d1b36}.dfstep.small svg{width:14px;height:14px}
-.dfarrow{color:#3b5585;font-size:16px;flex:none}
 .dfhint{margin:0 0 14px !important;font-size:12.5px !important;color:var(--mute) !important}
-@media (max-width:1099px){.devflow{flex-direction:column;align-items:stretch}.dfarrow{transform:rotate(90deg);align-self:center}.dfstep{flex-direction:row;justify-content:flex-start;padding:8px 12px;text-align:left}.dfbranch{grid-template-columns:1fr 1fr}.dfstep.small{justify-content:flex-start}}
-.dfbranch{flex:0 0 104px}.dfstep.small svg{display:none}.dfstep.small{white-space:nowrap;padding:6px 6px}
-@media (max-width:1099px){.dfbranch{flex:none}.dfstep.small{white-space:normal}}
 /* Model development: chart spans the panel under the icon; roomier boxes */
 .steppanel.haswide{flex-wrap:wrap;align-items:center;row-gap:16px}.steppanel.haswide .stepbody h3{margin:0}
-.stepwide{flex:0 0 100%;min-width:0}.stepwide .devflow{margin:0}
-@media (min-width:1100px){.devflow{align-items:stretch;gap:6px;padding:16px 12px}.dfarrow{align-self:center}
-  .dfstep:not(.small){justify-content:center;min-height:104px;padding:12px 8px;font-size:13px;gap:8px}.dfstep:not(.small) svg{width:24px;height:24px}
-  .dfbranch{flex:0 0 120px;align-content:center}.dfstep.small{font-size:12.5px;padding:7px 8px}}
-.dfstep{overflow-wrap:break-word}
-@media (max-width:1099px){.devflow{gap:2px;padding:10px}.dfarrow{line-height:1;font-size:13px;margin:-1px 0}.dfstep:not(.small){padding:7px 12px}.dfbranch{gap:4px;margin:2px 0}}
-@media (max-width:1099px){.dfarrow{display:block;width:14px;height:14px;line-height:14px;text-align:center;margin:1px 0;transform:rotate(90deg);color:#4e6283}}
+.stepwide{flex:0 0 100%;min-width:0}.stepwide .devphases{margin:0}
 /* MATLAB app video */
 .vidgrid{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(240px,1fr);gap:18px;align-items:start}
 .vidbox video{display:block;width:100%;aspect-ratio:16/10;background:#000;border:1px solid var(--line);border-radius:14px}
@@ -268,3 +254,24 @@ button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;t
 .chapters button:hover{background:var(--track);color:var(--ink)}.chapters button.on{background:rgba(20,184,166,.12);color:#fff}
 .chapters em{font:500 12.5px var(--mono);font-style:normal;color:var(--teal2);flex:none;width:38px}
 @media (max-width:900px){.vidgrid{grid-template-columns:1fr}}
+/* Model development timeline (four phases) */
+.devphases{list-style:none;margin:2px 0 6px;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;position:relative}
+.devphases::before{content:"";position:absolute;left:12.5%;right:12.5%;top:17px;height:2px;background:linear-gradient(90deg,var(--teal2),#f2a93b);opacity:.55}
+.devphases li{position:relative;display:flex;flex-direction:column;gap:8px;padding:0 10px}
+.dpnode{align-self:center;width:36px;height:36px;border-radius:50%;background:var(--paper);border:2px solid var(--teal2);display:grid;place-items:center;position:relative;z-index:1}
+.dpnode em{font:500 14px/1 var(--mono);font-style:normal;color:var(--teal2)}
+.devphases li.end .dpnode{border-color:#f2a93b}.devphases li.end .dpnode em{color:#f2a93b}
+.devphases h5{margin:4px 0 2px;text-align:center;font:500 11.5px/1.3 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--ink2)}
+.dpitem{display:flex;align-items:center;gap:9px;padding:9px 11px;border-left:3px solid var(--teal2);background:var(--track);border-radius:0 8px 8px 0;font-size:13px;line-height:1.35;color:var(--ink)}
+.dpitem svg{flex:none;width:18px;height:18px;color:var(--teal2)}
+.devphases li.end .dpitem{border-left-color:#f2a93b}.devphases li.end .dpitem svg{color:#f2a93b}
+.dpchart{display:grid;gap:5px;padding:9px 11px;background:var(--track);border:1px dashed var(--line);border-radius:8px}
+.dpchart small{font-size:11px;color:var(--mute)}
+.dpchart div{display:grid;grid-template-columns:92px 1fr 32px;align-items:center;gap:6px;font-size:11.5px;color:var(--ink2)}
+.dpchart i{display:block;height:7px;background:#13233f;border-radius:4px;overflow:hidden}.dpchart b{display:block;height:100%;background:#3b5585;border-radius:4px}
+.dpchart em{font:400 11px/1 var(--mono);font-style:normal;text-align:right}
+.dpchart div.pick{color:var(--ink)}.dpchart div.pick b{background:var(--teal2)}.dpchart div.pick em{color:var(--teal2)}
+@media (max-width:999px){.devphases{grid-template-columns:1fr;gap:14px;padding-left:46px}
+  .devphases::before{left:17px;right:auto;top:18px;bottom:18px;width:2px;height:auto;background:linear-gradient(180deg,var(--teal2),#f2a93b)}
+  .devphases li{padding:0}.dpnode{position:absolute;left:-46px;top:-4px}.devphases h5{text-align:left;margin-top:6px}}
+.dpitem,.dpchart{box-sizing:border-box;width:100%;align-self:stretch}.dpitem{flex:1 1 auto}
