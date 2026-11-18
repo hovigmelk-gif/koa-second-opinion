@@ -154,7 +154,7 @@ h2{font-size:clamp(28px,3.4vw,40px);line-height:1.15}h3{font-size:14px;font-weig
 .ovtrain{border:1px solid #2c4470;border-radius:12px;padding:12px;background:#0b1830}.ovtrain b{display:block;color:#fff;margin-bottom:4px}.ovtrain span{font-size:13px;color:var(--ink2);line-height:1.55}
 .ovmet{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.ovmet span{background:#122648;border-radius:999px;padding:6px 4px;text-align:center;font-size:12.5px;color:#c4d0e4}
 .ovgrp{display:flex;gap:6px}.ovgrp span{flex:1;border-radius:999px;padding:7px 4px;text-align:center;font-size:13px;font-weight:600;color:#fff}.ovgrp span:nth-child(1){background:#3b5585}.ovgrp span:nth-child(2){background:#2563a8}.ovgrp span:nth-child(3){background:#14b8a6;color:#04201c}
-.ovcam{aspect-ratio:1.3;border-radius:10px;background:radial-gradient(circle at 63% 58%,#800000 0,#fa0000 9%,#ffff00 20%,#05ffff 33%,#003caa 48%,#000083 68%)}
+.ovcam{display:block;width:100%;height:auto;max-height:300px;aspect-ratio:1.3;object-fit:cover;object-position:50% 60%;border-radius:10px;background:#000}
 .ovkl{display:flex;gap:3px}.ovkl span{flex:1;text-align:center;padding:7px 0;font-size:12.5px;font-weight:600;background:#122648;color:#c4d0e4;border-radius:5px}.ovkl span.on{outline:2px solid #fb923c;color:#fff;background:#173c6e}
 .ovapp{background:#173c6e;border-radius:10px;padding:10px 12px}.ovapp b{display:block;color:#fff}.ovapp span{font-size:12.5px;color:#c4d0e4}
 .ovarrow{align-self:center;color:#3b5585;font-size:22px}
@@ -284,3 +284,29 @@ button.kl{font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;t
 .vidnotes>div{background:var(--track);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
 .vidnotes h4{margin:0 0 6px;font-size:13.5px;color:var(--ink)}.vidnotes p{margin:0;font-size:13px;line-height:1.55;color:var(--ink2)}
 @media (max-width:700px){.vidnotes{grid-template-columns:1fr}}
+/* ===== Type: same fonts as the restyle (DM Sans headings, Literata italic accents, IBM Plex body and data) ===== */
+:root{--display:'DM Sans',system-ui,sans-serif;--serif:'Literata',Georgia,serif}
+h1,h2,h3{font-family:var(--display);text-wrap:balance}
+h1{letter-spacing:-.022em}h2{letter-spacing:-.015em;line-height:1.12}h3{font-weight:600}
+h1 em,h2 em{font-family:var(--serif);font-style:italic;font-weight:400;font-size:.98em;letter-spacing:-.015em;padding-right:.04em}
+.wait,.verdict b,.ai .headline b,.hidden-ai b{font-family:var(--display);letter-spacing:-.01em}
+/* ===== Hero: interactive preview of the real app result (from the restyle) ===== */
+.hero{text-align:left}.hero h1{margin:0;font-size:clamp(36px,4.4vw,60px)}.hero .lede{margin:24px 0 32px;font-size:18px}.hero .cta{justify-content:flex-start;margin-bottom:0}.hero .cta-note{text-align:left}
+.herosplit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:center;margin-bottom:48px}
+.herotext>*,.appframe{animation:enter .7s cubic-bezier(.2,.7,.2,1) both}.herotext>:nth-child(2){animation-delay:.06s}.herotext>:nth-child(3){animation-delay:.12s}.herotext>:nth-child(4){animation-delay:.18s}.appframe{animation-delay:.25s}
+@keyframes enter{from{opacity:0;transform:translateY(14px)}}
+.appframe{background:var(--card);border:1px solid #2a4170;border-radius:16px;overflow:hidden;box-shadow:0 30px 80px -20px rgba(0,0,0,.65),0 0 0 1px rgba(20,184,166,.06)}
+.afbar{display:flex;gap:6px;align-items:center;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--track)}.afbar i{width:9px;height:9px;border-radius:50%;background:#2a4170}.afbar span{margin-left:8px;font:12px var(--mono);color:var(--mute)}
+.afbody{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;padding:16px}
+.afimg{display:flex;flex-direction:column;gap:10px}
+.afstage{position:relative;display:block;padding:0;border:0;background:#000;border-radius:10px;overflow:hidden;cursor:pointer}.afstage:disabled{cursor:default}
+.afstage img,.afstage canvas{display:block;width:100%;aspect-ratio:1}
+.afstage canvas{position:absolute;inset:0;opacity:0;transition:opacity .35s ease}.afstage canvas.on{opacity:1}
+.afseg{align-self:stretch}.afseg button{flex:1;transition:background .15s,color .15s}
+.afres{display:flex;flex-direction:column;gap:2px}.afres small{font-size:12px;color:var(--mute)}
+.afres>b{font:500 24px/1.2 var(--display);letter-spacing:-.01em;color:#fff;margin:2px 0 12px}.afres>b em{font:italic 400 1em/1 var(--serif);color:var(--ink2);text-transform:capitalize}
+.afres .brow{grid-template-columns:62px 1fr 48px}.afres .brow i{transition:width .8s cubic-bezier(.2,.7,.2,1)}.afres .mini{margin-top:auto;padding-top:12px}
+.aflink{margin-top:6px;padding:4px 0;font:600 14px var(--sans);color:var(--teal2);text-decoration:none;align-self:flex-start}.aflink:hover{text-decoration:underline}
+@media (max-width:960px){.herosplit{grid-template-columns:1fr;gap:40px}}
+@media (max-width:420px){.afbody{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){.herotext>*,.appframe{animation:none}.afstage canvas,.afres .brow i{transition:none}}

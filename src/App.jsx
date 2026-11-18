@@ -98,6 +98,8 @@ function AppView({ load }) {
 function Hero({ load }) {
   return (
     <section className="hero wrap">
+      <div className="herosplit">
+        <div className="herotext">
       <p className="pill">An interactive prototype of AI in biomedical engineering</p>
       <h1>Grading knee osteoarthritis from a single X-ray, <em>entirely in your browser.</em></h1>
       <p className="lede">
@@ -110,6 +112,9 @@ function Hero({ load }) {
         <a className="btn ghost big" href="#results" onClick={go('results')}>See the results</a>
         <span className="cta-note">{load.ready ? 'Models loaded · ready' : load.err ? 'Model download failed, refresh to retry' : `Preparing models · ${Math.round(load.p * 100)}%`}</span>
       </div>
+        </div>
+        <HeroFrame load={load} />
+      </div>
       <div className="stats">
         <Stat n="74.9%" l="3-group accuracy" s="1,656 held-out test knees" t="Of 1,656 test knees the model never saw during training, 74.9% were placed in the correct severity group (KL 0–1, KL 2 or KL 3–4). The 95% confidence interval is 72.7–77.1%." />
         <Stat n="0.730" l="Quadratic weighted κ" s="agreement with reference grades" t="Quadratic weighted kappa measures agreement with the dataset's reference grades, from 0 (no better than chance) to 1 (perfect). It gives partial credit for near misses and penalises far-off answers more; 0.730 is usually described as substantial agreement." />
@@ -118,6 +123,42 @@ function Hero({ load }) {
       </div>
       <p className="stathint">Hover over or tap a number to see what it means.</p>
     </section>
+  );
+}
+// Hero: the real app result for one held-out test knee, computed live once the models load
+function HeroFrame({ load }) {
+  const s = SAMPLES[4], id = s.file.replace(/^KL\d_|\.png$/g, '');
+  const [res, setRes] = useState(null);
+  const [cam, setCam] = useState(true);
+  const cv = useRef(null);
+  useEffect(() => { if (load.ready) runSample(s.file).then(setRes).catch(() => {}); }, [load.ready]);
+  useEffect(() => { if (res && cv.current) cv.current.getContext('2d').putImageData(res.layers.over, 0, 0); }, [res]);
+  const showCam = res && cam;
+  return (
+    <div className="appframe">
+      <div className="afbar"><i /><i /><i /><span>Test knee {id} · reference {s.label}</span></div>
+      <div className="afbody">
+        <div className="afimg">
+          <button type="button" className="afstage" disabled={!res} onClick={() => setCam(c => !c)}
+            aria-label={showCam ? 'Show the original X-ray' : 'Show the Grad-CAM overlay'}>
+            <img src={`/samples/${s.file}`} alt={`Held-out test knee ${id}, original X-ray`} />
+            {res && <canvas ref={cv} width="224" height="224" className={showCam ? 'on' : ''} aria-hidden="true" />}
+          </button>
+          <div className="seg afseg" role="group" aria-label="Image view">
+            <button type="button" className={!showCam ? 'on' : ''} aria-pressed={!showCam} disabled={!res} onClick={() => setCam(false)}>X-ray</button>
+            <button type="button" className={showCam ? 'on' : ''} aria-pressed={!!showCam} disabled={!res} onClick={() => setCam(true)}>Grad-CAM</button>
+          </div>
+        </div>
+        <div className="afres">
+          <small>Predicted KL grade · 5-grade model</small>
+          <b>{res ? <>{KL_NAMES[res.kl].split(' · ')[0]} <em>{KL_NAMES[res.kl].split(' · ')[1]}</em></> : 'Analysing…'}</b>
+          {KL_NAMES.map((k, i) => <div key={k} className={`brow ${res && i === res.kl ? 'hi' : ''}`}>
+            <span>{k.split(' · ')[0]}</span><div><i style={{ width: res ? pct(res.P5[i]) : 0 }} /></div><em>{res ? pct(res.P5[i]) : '–'}</em></div>)}
+          <p className="mini">{res ? `Severity group: ${GROUP_SHORT[res.grp]} (${pct(res.P3[res.grp])}) · computed in your browser` : load.err ? 'Models could not load here.' : `Loading models · ${Math.round(load.p * 100)}%`}</p>
+          <a className="aflink" href="#/app">Try your own X-ray →</a>
+        </div>
+      </div>
+    </div>
   );
 }
 const Stat = ({ n, l, s, t }) => <Tip className="stat below" t={t}><b>{n}</b><span>{l}</span><small>{s}</small></Tip>;
@@ -1026,7 +1067,7 @@ function Overview() {
       </div>
       <div className="ovarrow">→</div>
       <div className="ovcol c4"><Tip t="Step 4 is what you see: a grade, a heat map and any warnings."><h4><em>4</em>Output</h4></Tip>
-        <Tip t="Grad-CAM heat map: red marks the parts of the X-ray that most influenced the decision, blue the least. It shows where the model looked, not where the disease is."><div className="ovcam" /></Tip>
+        <Tip t="Grad-CAM heat map: red marks the parts of the X-ray that most influenced the decision, blue the least. It shows where the model looked, not where the disease is."><img className="ovcam" src="/figs/ov_KL4_gradcam.webp" width="224" height="224" alt="Grad-CAM overlay on held-out test knee 9012867R, graded KL4 by the model" loading="lazy" /></Tip>
         <Tip t="The five-grade model gives a probability for each KL grade; the most likely one is shown as the AI grade."><small>KL grade output</small>
           <div className="ovkl">{[0, 1, 2, 3, 4].map(k => <span key={k} className={k === 4 ? 'on' : ''}>KL{k}</span>)}</div>
           <p className="ovnote warm">Example: KL4 · severe</p></Tip>

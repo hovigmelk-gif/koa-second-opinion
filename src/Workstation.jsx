@@ -139,9 +139,10 @@ export default function Workstation({ load }) {
     const fRows = FINDINGS.filter(([k]) => fd[k]).map(([k, l]) => `<tr><td>${l}</td><td>${esc(fd[k])}</td></tr>`).join('');
     const ag = agreement(cg, res.kl);
     const html = `<!doctype html><html><head><meta charset="utf-8"><title>KOA report ${esc(name)}</title><style>
+      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       body{font:13px/1.5 'Segoe UI',Arial,sans-serif;color:#0f172a;margin:28px;max-width:900px}h1{font-size:20px;margin:0}h2{font-size:14px;margin:22px 0 8px;border-bottom:1px solid #cbd5e1;padding-bottom:4px}
       .sub{color:#475569}.imgs{display:flex;gap:16px;margin-top:14px}.imgs figure{margin:0;text-align:center;font-size:11px;color:#475569}.imgs img{width:260px;height:260px;image-rendering:auto}
-      table{border-collapse:collapse;width:100%}td{padding:3px 6px;vertical-align:middle}.b{background:#f1f5f9;height:10px;border-radius:5px;width:100%}.b i{display:block;height:10px;border-radius:5px}
+      table{border-collapse:collapse;width:100%}td{padding:3px 6px;vertical-align:middle}td:first-child{width:130px}td:last-child{width:60px;text-align:right;font-variant-numeric:tabular-nums}.b{background:#f1f5f9;height:10px;border-radius:5px;width:100%}.b i{display:block;height:10px;border-radius:5px}
       .verdict{display:flex;gap:30px;margin-top:10px}.verdict div{border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px}.verdict b{font-size:17px;display:block}
       .ag{padding:8px 12px;border-radius:6px;margin-top:10px}.ok{background:#dcfce7}.one{background:#fef3c7}.far{background:#fee2e2}.none{background:#f1f5f9}
       pre{white-space:pre-wrap;font:inherit;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px}.disc{margin-top:24px;font-size:11px;color:#64748b;border-top:1px solid #cbd5e1;padding-top:8px}
