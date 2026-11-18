@@ -787,7 +787,10 @@ function Connect() {
     e.preventDefault();
     if (!f.name.trim() || !/^\S+@\S+\.\S+$/.test(f.email) || !f.message.trim()) { setSt('Please add your name, a valid email and a message.'); return; }
     setSt('sending');
-    try { const { error } = await supabase.from('contact_messages').insert({ name: f.name.trim().slice(0, 80), email: f.email.trim(), message: f.message.trim().slice(0, 2000) }); if (error) throw error; setF({ name: '', email: '', message: '' }); setSt('Thanks, your message has been sent. I\'ll get back to you.'); }
+    try {   // Netlify Forms: kept in the Netlify dashboard and emailed by its form notification
+      const r = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ 'form-name': 'contact', 'bot-field': f.bot || '', name: f.name.trim().slice(0, 80), email: f.email.trim(), message: f.message.trim().slice(0, 2000) }).toString() });
+      if (!r.ok) throw new Error(r.status); setF({ name: '', email: '', message: '' }); setSt('Thanks, your message has been sent. I\'ll get back to you.'); }
     catch { setSt('Sorry, that did not send. Please try again.'); }
   }
   return (
@@ -801,6 +804,7 @@ function Connect() {
         </div>
         <form className="card form" onSubmit={submit}>
           <h3>Send me a message</h3>
+          <input name="bot-field" value={f.bot || ''} onChange={e => setF({ ...f, bot: e.target.value })} hidden tabIndex={-1} autoComplete="off" />
           <label>Name<input value={f.name} maxLength={80} onChange={e => setF({ ...f, name: e.target.value })} /></label>
           <label>Email<input type="email" value={f.email} maxLength={120} onChange={e => setF({ ...f, email: e.target.value })} /></label>
           <label>Message<textarea rows={5} value={f.message} maxLength={2000} onChange={e => setF({ ...f, message: e.target.value })} /></label>
