@@ -2,7 +2,6 @@
 // summaries (KOA_Explain templates), structured findings and a printable report.
 import { useEffect, useRef, useState } from 'react';
 import { decodeImage, analyse, renderLayers } from './engine.js';
-import { GROUP_SHORT } from './koa-core.js';
 
 const SAMPLES = [
   { file: 'KL0_9003175L.png', kl: 0 }, { file: 'KL1_9001400L.png', kl: 1 }, { file: 'KL2_9003316R.png', kl: 2 },
@@ -125,46 +124,15 @@ export default function Workstation({ load }) {
   const random = async () => { const s = SAMPLES[Math.floor(Math.random() * SAMPLES.length)]; open(await (await fetch(`/samples/${s.file}`)).blob(), s.file, s.kl); };
   const compare = () => { setRevealed(true); setView('cam'); };
 
-  function quickSummary() {
-    const t = [`KOA second opinion: quick summary`, `File: ${name}${side ? '  (' + side + ')' : ''}`, `Generated: ${new Date().toLocaleString()}`, '',
-      `Clinician grade: ${cg === null ? 'not recorded' : 'KL' + cg}`, note ? `Clinician note: ${note}` : null, '',
-      `AI KL grade (Model 4B): KL${res.kl} (${(100 * res.P5[res.kl]).toFixed(0)}%)`, `AI severity group (Model 1): ${GROUP_LONG[res.grp]} (${(100 * Math.max(...res.P3)).toFixed(0)}%)`,
-      `Review: ${res.flags.length ? res.flags.join('; ') : 'no review flags'}`, '', `CLINICIAN SUMMARY${edited ? ' (edited by clinician)' : ''}`, texts.clin, '', 'PATIENT SUMMARY', texts.pat].filter(x => x !== null).join('\n');
-    download(`KOA_QuickSummary_${name.replace(/\.[^.]+$/, '')}.txt`, t);
-  }
-
-  function detailedReport() {
-    const L = layers.current; const heat = (() => { const o = new ImageData(224, 224); for (let i = 0; i < 50176 * 4; i += 4) { for (let ch = 0; ch < 3; ch++) o.data[i + ch] = 0.6 * L.base.data[i + ch] + 0.4 * L.heat.data[i + ch]; o.data[i + 3] = 255; } return o; })();
-    const bars = (labels, vals, hi, mark) => labels.map((l, i) => `<tr><td>${l}</td><td><div class="b"><i style="width:${(100 * vals[i]).toFixed(1)}%;background:${i === hi ? '#0f766e' : '#cbd5e1'};${i === mark ? 'outline:2px solid #ea580c;outline-offset:1px' : ''}"></i></div></td><td>${(100 * vals[i]).toFixed(1)}%</td></tr>`).join('');
-    const fRows = FINDINGS.filter(([k]) => fd[k]).map(([k, l]) => `<tr><td>${l}</td><td>${esc(fd[k])}</td></tr>`).join('');
-    const ag = agreement(cg, res.kl);
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>KOA report ${esc(name)}</title><style>
-      *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      body{font:13px/1.5 'Segoe UI',Arial,sans-serif;color:#0f172a;margin:28px;max-width:900px}h1{font-size:20px;margin:0}h2{font-size:14px;margin:22px 0 8px;border-bottom:1px solid #cbd5e1;padding-bottom:4px}
-      .sub{color:#475569}.imgs{display:flex;gap:16px;margin-top:14px}.imgs figure{margin:0;text-align:center;font-size:11px;color:#475569}.imgs img{width:260px;height:260px;image-rendering:auto}
-      table{border-collapse:collapse;width:100%}td{padding:3px 6px;vertical-align:middle}td:first-child{width:130px}td:last-child{width:60px;text-align:right;font-variant-numeric:tabular-nums}.b{background:#f1f5f9;height:10px;border-radius:5px;width:100%}.b i{display:block;height:10px;border-radius:5px}
-      .verdict{display:flex;gap:30px;margin-top:10px}.verdict div{border:1px solid #cbd5e1;border-radius:8px;padding:10px 14px}.verdict b{font-size:17px;display:block}
-      .ag{padding:8px 12px;border-radius:6px;margin-top:10px}.ok{background:#dcfce7}.one{background:#fef3c7}.far{background:#fee2e2}.none{background:#f1f5f9}
-      pre{white-space:pre-wrap;font:inherit;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:10px}.disc{margin-top:24px;font-size:11px;color:#64748b;border-top:1px solid #cbd5e1;padding-top:8px}
-      @media print{body{margin:12mm}button{display:none}}</style></head><body>
-      <button onclick="print()" style="float:right;padding:8px 14px">Print / save as PDF</button>
-      <h1>Knee OA second opinion: detailed report</h1><div class="sub">${esc(name)}${side ? ' · ' + side : ''} · ${new Date().toLocaleString()} · research prototype, not a medical device</div>
-      <div class="imgs"><figure><img src="${toDataURL(L.base)}"><figcaption>Radiograph (CLAHE contrast-enhanced)</figcaption></figure>
-      <figure><img src="${toDataURL(heat)}"><figcaption>Grad-CAM: regions that most influenced the 3-group decision</figcaption></figure></div>
-      <h2>Result</h2><div class="verdict"><div>AI KL grade (Model 4B)<b>KL${res.kl} · ${NM[res.kl]}</b>${(100 * res.P5[res.kl]).toFixed(0)}% probability</div>
-      <div>Severity group (Model 1)<b>${GROUP_LONG[res.grp]}</b>${(100 * Math.max(...res.P3)).toFixed(0)}% confidence</div>
-      <div>Clinician grade<b>${cg === null ? 'not recorded' : 'KL' + cg}</b>${note ? esc(note) : '&nbsp;'}</div></div>
-      <div class="ag ${ag.cls}">${ag.text}</div>
-      <h2>Probabilities</h2><table>${bars(KL_SHORT, res.P5, res.kl, cg)}</table><br><table>${bars(GROUP_SHORT, res.P3, res.grp, -1)}</table>
-      <h2>Review</h2><div>${res.flags.length ? 'REVIEW RECOMMENDED: ' + res.flags.join('; ') : 'No review flags (unflagged test knees: 81.7% correct for the severity group).'}${res.checks.issues.length ? '<br>Image checks: ' + res.checks.issues.join('; ') : ''}</div>
-      <h2>Clinician summary${edited ? ' (edited by clinician)' : ''}</h2><pre>${esc(texts.clin)}</pre>
-      <h2>Patient summary</h2><pre>${esc(texts.pat)}</pre>
-      ${fRows || imp ? `<h2>Findings &amp; context (clinician-entered)</h2><table>${fRows}</table>${imp ? `<p><b>Final impression:</b> ${esc(imp)}</p>` : ''}` : ''}
-      <h2>Model card</h2><div>3-group: ResNet-18, 3 seeds + flip TTA, KL0-1 margin 0.10 · test 74.94% (95% CI 72.71–77.12), QWK 0.730, ECE 3.7%.<br>
-      KL grade: ResNet-18 with ordinal loss, 3 seeds + flip TTA · 58.9% exact, 86.7% within one grade, QWK 0.711. Per-grade sensitivity KL0–4: 87 / 19 / 43 / 58 / 80%.<br>
-      Trained and tested on OAI kneeKL224 (1,656 test knees). Computed in the browser; the image was not uploaded.</div>
-      <div class="disc">${DISC_C}</div></body></html>`;
-    const w = window.open('', '_blank'); if (!w) { download(`KOA_Report_${name.replace(/\.[^.]+$/, '')}.html`, html, 'text/html'); return; }
+  // Quick (page 1) or detailed (5-page) report, as KOA_CaseReport.m. The window opens inside the click so it is not blocked.
+  async function report(kind) {
+    const w = window.open('', '_blank');
+    const { openReport } = await import('./report.js');
+    const L = layers.current, t = document.createElement('canvas'); t.width = img.w; t.height = img.h; t.getContext('2d').putImageData(new ImageData(img.rgba, img.w, img.h), 0, 0);
+    const r = document.createElement('canvas'); r.width = r.height = 224; r.getContext('2d').drawImage(t, 0, 0, 224, 224);
+    const html = openReport({ res, cg, note, imp, fd, name, side, texts, edited, source: edited ? 'validated template, edited by the clinician' : 'validated template',
+      imgs: { raw: r.toDataURL('image/png'), base: toDataURL(L.base), over: toDataURL(L.over), heat: toDataURL(L.heat) } }, kind);
+    if (!w) { download(`KOA_Case_${name.replace(/\.[^.]+$/, '')}_${kind}.html`, html, 'text/html'); return; }
     w.document.write(html); w.document.close();
   }
 
@@ -176,8 +144,8 @@ export default function Workstation({ load }) {
         <button className="tb" onClick={random} disabled={!load.ready}>Random test X-ray</button>
         <input ref={fileIn} type="file" accept="image/png,image/jpeg" hidden onChange={e => { const f = e.target.files[0]; if (f) open(f, f.name); e.target.value = ''; }} />
         <span className="sep" />
-        <button className="tb" onClick={quickSummary} disabled={!showAI}>Save quick summary</button>
-        <button className="tb" onClick={detailedReport} disabled={!showAI}>Save detailed report</button>
+        <button className="tb" onClick={() => report('quick')} disabled={!showAI}>Save quick summary (PDF)</button>
+        <button className="tb" onClick={() => report('detailed')} disabled={!showAI}>Save detailed report (PDF)</button>
         <span className="sep" />
         <label className="tog" title="Hide the AI opinion until you have recorded your own grade (avoids anchoring)">
           <input type="checkbox" checked={blind} onChange={e => { setBlind(e.target.checked); if (!e.target.checked) setRevealed(true); }} />Blind first</label>
@@ -238,17 +206,44 @@ export default function Workstation({ load }) {
                   {refKL !== null && <p>Dataset reference label (demonstration only): KL{refKL}</p>}
                 </div>
                 <p className="rpnote"><b>Research prototype · not for clinical use.</b> This result is for demonstration only and must not be used for diagnosis or treatment decisions.</p>
-                <div className="tabs">{[['clin', 'Clinician summary'], ['pat', 'Patient summary']].map(([k, l]) =>
-                  <button key={k} className={tab === k ? 'on' : ''} onClick={() => setTab(k)}>{l}</button>)}</div>
-                {tab !== 'find' ? <>
+                <div className="tabs">{[['clin', 'Clinician summary'], ['pat', 'Patient summary'], ['find', 'Findings'], ['vlm', 'VLM (beta)'], ['llm', 'LLM settings']].map(([k, l]) =>
+                  <button key={k} className={`${tab === k ? 'on' : ''} ${k === 'vlm' || k === 'llm' ? 'wip' : ''}`} onClick={() => setTab(k)}>{l}</button>)}</div>
+                <p className="wipnote">VLM and LLM: in development, available in the MATLAB desktop app only, as shown in the <a href="/video/matlab-app-demo.mp4" target="_blank" rel="noopener">video</a>.</p>
+                {(tab === 'clin' || tab === 'pat') && <>
                   <textarea className="sumtext" value={texts[tab]} onChange={e => { setTexts({ ...texts, [tab]: e.target.value }); setEdited(true); }} />
-                  <p className="mini">You can edit this text; the edited version is saved in the report (marked "edited by clinician").</p></>
-                  : <div className="findings">
+                  <p className="mini">You can edit this text; the edited version is saved in the report (marked "edited by clinician").</p></>}
+                {tab === 'find' && <div className="findings">
                     <p className="mini">All fields optional; empty fields are left out of the report. Hover a field for an explanation.</p>
-                    <div className="fgrid">{FINDINGS.map(([k, l, opts, tip]) => (
+                    <div className="fgrid">
+                      <label title="Date the X-ray was taken. Left out of the PDF when De-identify is ticked.">Exam date<input type="date" value={fd.date || ''} onChange={e => setFd({ ...fd, date: e.target.value })} /></label>
+                      {[['age', 'Age (years)', 'Left out of the PDF when De-identify is ticked.'], ['height', 'Height (cm)', 'With weight, used to calculate BMI (risk context only; BMI does not determine the KL grade).'], ['weight', 'Weight (kg)', 'With height, used to calculate BMI.']].map(([k, l, tip]) =>
+                        <label key={k} title={tip}>{l}<input type="number" min="0" value={fd[k] || ''} onChange={e => setFd({ ...fd, [k]: e.target.value })} /></label>)}
+                      <label title="Left out of the PDF when De-identify is ticked.">Sex<select value={fd.sex || ''} onChange={e => setFd({ ...fd, sex: e.target.value })}>
+                        <option value="">—</option>{['female', 'male', 'other'].map(o => <option key={o}>{o}</option>)}</select></label>
+                      {FINDINGS.map(([k, l, opts, tip]) => (
                       <label key={k} title={tip}>{l}<select value={fd[k] || ''} onChange={e => setFd({ ...fd, [k]: e.target.value })}>
                         <option value="">—</option>{opts.map(o => <option key={o}>{o}</option>)}</select></label>))}</div>
                     <label className="impl">Final impression<textarea rows={2} value={imp} onChange={e => setImp(e.target.value)} /></label>
+                    <label className="deid"><input type="checkbox" checked={fd.deid !== false} onChange={e => setFd({ ...fd, deid: e.target.checked })} />De-identify PDF (omit date, age and sex)</label>
+                  </div>}
+                {tab === 'vlm' && <div className="wippanel">
+                    <span className="wiptag">In development · MATLAB desktop app only</span>
+                    <div className="wiprow"><button disabled>Ask VLM (local)</button><select disabled><option>qwen2.5vl:7b</option></select></div>
+                    <p className="mini">Example output from the desktop app (knee 9254422R, not this X-ray):</p>
+                    <pre className="wipout">{`knee radiograph: yes | view: lateral | image quality: good
+narrowing medial/lateral: unsure / unsure | osteophytes medial/lateral: unsure / unsure
+sclerosis: unsure | most affected: unsure
+Conflict: VLM reports a lateral view; the CNN was trained on frontal (PA) views`}</pre>
+                    <p className="mini">UNVERIFIED suggestions. The VLM fills fixed fields only and never grades; the CNN grade is unchanged. In the desktop app the model runs locally (Ollama), so the image stays on that computer.</p>
+                  </div>}
+                {tab === 'llm' && <div className="wippanel">
+                    <span className="wiptag">In development · MATLAB desktop app only</span>
+                    <label className="wiprow">Summary engine<select disabled><option>Validated template (offline, default)</option><option>Local LLM (Ollama)</option><option>Claude API</option></select></label>
+                    <p className="mini">Source on this website: validated template. Example LLM rewrite from the desktop app (knee 9254422R, not this X-ray):</p>
+                    <pre className="wipout">{`Right knee: KL0, no radiographic OA (probability 64%). Next most likely: KL1 (30%). Severity-group model: No/doubtful OA (KL0-1), confidence 90%. On 1656 test knees, the model identified KL0 correctly in 87% of cases (58.9% exact, 86.7% within one grade). The clinician's grade (KL1) differs from the AI by one grade. The clinician makes the decision regarding the severity of the patient's OA.
+
+Summary source: LLM rewrite, every number and grade checked against the model output`}</pre>
+                    <p className="mini">Only the structured result (grade, probabilities, flags) is sent to an LLM, never the image or file name. Every number and grade in the LLM text is checked against the model output; if any check fails the template is shown.</p>
                   </div>}
               </>}
         </section>
